@@ -1,4 +1,6 @@
-import { Component, HostListener, OnDestroy } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../environments/environment';
 
 interface Channel {
   id: number;
@@ -17,12 +19,34 @@ interface PianoRow {
   notes: boolean[];
 }
 
+interface LibraryNode {
+  name: string;
+  path: string;
+  type: 'folder' | 'file';
+  size?: number;
+  children?: LibraryNode[];
+}
+
+interface LibraryResponse {
+  root: string;
+  folders: {
+    samples: LibraryNode[];
+    effects: LibraryNode[];
+    instruments: LibraryNode[];
+  };
+}
+
+interface FlatNode {
+  node: LibraryNode;
+  depth: number;
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent implements OnDestroy, OnInit {
   readonly stepCount = 16;
   readonly steps = Array.from({ length: this.stepCount }, (_, i) => i);
 
@@ -38,6 +62,12 @@ export class AppComponent implements OnDestroy {
   patternNumber = 1;
   patternNames = ['Intro', 'Verse', 'Build', 'Drop', 'Break', 'Outro', 'Fill', 'Idea'];
   activeBrowserTab = 'packs';
+
+  library: LibraryResponse | null = null;
+  libraryError = '';
+  libraryLoading = false;
+  openMessage = '';
+  private previewAudio: HTMLAudioElement | null = null;
 
   channels: Channel[] = this.createChannels();
   pianoRows: PianoRow[] = this.createPianoRows();
@@ -58,8 +88,12 @@ export class AppComponent implements OnDestroy {
   private readonly bassNotes = [55, 55, 65.41, 49, 55, 73.42, 55, 61.74];
   private readonly padChords = [[110, 130.81, 164.81], [98, 123.47, 146.83], [87.31, 110, 130.81], [98, 116.54, 146.83]];
 
-  constructor() {
+  constructor(private http: HttpClient) {
     this.resetPianoNotes();
+  }
+
+  ngOnInit(): void {
+    this.loadLibrary();
   }
 
   get patternName(): string {
@@ -197,6 +231,91 @@ export class AppComponent implements OnDestroy {
     this.selectedChannel = index;
   }
 
+  loadLibrary(): void {
+    this.libraryLoading = true;
+    this.libraryError = '';
+    this.http.get<LibraryResponse>(`${environment.apiUrl}/api/library`).subscribe({
+      next: data => {
+        this.library = data;
+        this.libraryLoading = false;
+      },
+      error: () => {
+        this.libraryError = 'Backend offline - start Flask on :5000';
+        this.libraryLoading = false;
+      }
+    });
+  }
+
+  folderNodes(name: 'samples' | 'effects' | 'instruments'): LibraryNode[] {
+    return this.library?.folders?.[name] ?? [];
+  }
+
+  flatten(nodes: LibraryNode[], depth = 0): FlatNode[] {
+    const out: FlatNode[] = [];
+    for (const node of nodes) {
+      out.push({ node, depth });
+      if (node.children && node.children.length) {
+        out.push(...this.flatten(node.children, depth + 1));
+      }
+    }
+    return out;
+  }
+
+  openFolder(name: string): void {
+    this.http.post<{ opened: string; error?: string }>(
+      `${environment.apiUrl}/api/library/open`,
+      { folder: name }
+    ).subscribe({
+      next: res => {
+        this.openMessage = 'Opened ' + res.opened;
+      },
+      error: () => {
+        this.openMessage = 'Could not open folder';
+      }
+    });
+  }
+
+  onNodeClick(node: LibraryNode): void {
+    if (node.type === 'file') {
+      this.previewFile(node);
+    }
+  }
+
+  previewFile(node: LibraryNode): void {
+    const ext = (node.name.split('.').pop() || '').toLowerCase();
+    if (!['wav', 'mp3', 'ogg', 'aif', 'aiff', 'flac', 'm4a'].includes(ext)) {
+      return;
+    }
+    this.stopPreview();
+    const encoded = node.path.split('/').map(p => encodeURIComponent(p)).join('/');
+    const audio = new Audio(`${environment.apiUrl}/api/library/file/${encoded}`);
+    audio.volume = Math.min(1, Math.pow(this.masterVolume / 100, 1.5) + 0.1);
+    audio.play().catch(() => {
+      this.libraryError = 'Could not play ' + node.name;
+    });
+    this.previewAudio = audio;
+  }
+
+  stopPreview(): void {
+    if (this.previewAudio) {
+      this.previewAudio.pause();
+      this.previewAudio = null;
+    }
+  }
+
+  formatSize(size?: number): string {
+    if (!size) {
+      return '';
+    }
+    if (size < 1024) {
+      return size + ' B';
+    }
+    if (size < 1024 * 1024) {
+      return Math.round(size / 1024) + ' KB';
+    }
+    return (size / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
   knobAngle(value: number): number {
     return -135 + (value / 100) * 270;
   }
@@ -220,6 +339,7 @@ export class AppComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.stopClock();
+    this.stopPreview();
     if (this.audio) {
       this.audio.close();
       this.audio = null;

@@ -63,22 +63,87 @@
     <aside class="browser panel">
       <div class="panel-header">
         <h2>Browser</h2>
-        <span class="hint">presets</span>
+        <span class="hint">{{ libraryLoading ? 'scanning...' : 'library' }}</span>
       </div>
       <div class="browser-tabs">
         <button [class.active]="activeBrowserTab === 'packs'" (click)="activeBrowserTab = 'packs'">Packs</button>
         <button [class.active]="activeBrowserTab === 'files'" (click)="activeBrowserTab = 'files'">Files</button>
         <button [class.active]="activeBrowserTab === 'plugins'" (click)="activeBrowserTab = 'plugins'">Plugins</button>
+        <button class="refresh-btn" title="Reload library" (click)="loadLibrary()">&#8635;</button>
       </div>
-      <div class="browser-list">
+
+      <div class="browser-error" *ngIf="libraryError">{{ libraryError }}</div>
+
+      <div class="browser-list" *ngIf="activeBrowserTab === 'packs'">
         <div class="browser-section" *ngFor="let section of browserSections">
           <div class="browser-section-title">&#9662; {{ section.title }}</div>
           <ul>
             <li *ngFor="let item of section.items">
-              <span class="folder-icon">&#128193;</span>{{ item }}
+              <span class="folder-icon">&#9656;</span>{{ item }}
             </li>
           </ul>
         </div>
+      </div>
+
+      <div class="browser-list" *ngIf="activeBrowserTab === 'files'">
+        <div class="browser-section">
+          <div class="browser-section-title">
+            <span>&#9662; Samples</span>
+            <button class="open-btn" (click)="openFolder('samples')">Open</button>
+          </div>
+          <ul class="tree">
+            <li
+              *ngFor="let item of flatten(folderNodes('samples'))"
+              [class.file]="item.node.type === 'file'"
+              [style.paddingLeft.px]="6 + item.depth * 14"
+              [title]="item.node.path"
+              (click)="onNodeClick(item.node)">
+              <span class="folder-icon">{{ item.node.type === 'folder' ? '&#9656;' : '&#9834;' }}</span>
+              <span class="node-name">{{ item.node.name }}</span>
+              <span class="node-size" *ngIf="item.node.type === 'file'">{{ formatSize(item.node.size) }}</span>
+            </li>
+            <li class="empty" *ngIf="!folderNodes('samples').length">(empty) - drop samples in backend/samples</li>
+          </ul>
+        </div>
+        <div class="library-path" *ngIf="library">root: {{ library.root }}</div>
+      </div>
+
+      <div class="browser-list" *ngIf="activeBrowserTab === 'plugins'">
+        <div class="browser-section">
+          <div class="browser-section-title">
+            <span>&#9662; Instrument plugins</span>
+            <button class="open-btn" (click)="openFolder('instruments')">Open</button>
+          </div>
+          <ul class="tree">
+            <li
+              *ngFor="let item of flatten(folderNodes('instruments'))"
+              [class.file]="item.node.type === 'file'"
+              [style.paddingLeft.px]="6 + item.depth * 14"
+              [title]="item.node.path">
+              <span class="folder-icon">{{ item.node.type === 'folder' ? '&#9656;' : '&#9881;' }}</span>
+              <span class="node-name">{{ item.node.name }}</span>
+            </li>
+            <li class="empty" *ngIf="!folderNodes('instruments').length">(empty) - drop VST .dll files here</li>
+          </ul>
+        </div>
+        <div class="browser-section">
+          <div class="browser-section-title">
+            <span>&#9662; Effect plugins</span>
+            <button class="open-btn" (click)="openFolder('effects')">Open</button>
+          </div>
+          <ul class="tree">
+            <li
+              *ngFor="let item of flatten(folderNodes('effects'))"
+              [class.file]="item.node.type === 'file'"
+              [style.paddingLeft.px]="6 + item.depth * 14"
+              [title]="item.node.path">
+              <span class="folder-icon">{{ item.node.type === 'folder' ? '&#9656;' : '&#9881;' }}</span>
+              <span class="node-name">{{ item.node.name }}</span>
+            </li>
+            <li class="empty" *ngIf="!folderNodes('effects').length">(empty) - drop VST .dll files here</li>
+          </ul>
+        </div>
+        <div class="library-path" *ngIf="openMessage">{{ openMessage }}</div>
       </div>
     </aside>
 
