@@ -1,3 +1,7 @@
+:host {
+  display: contents;
+}
+
 .channel-rack {
   display: flex;
   flex-direction: column;

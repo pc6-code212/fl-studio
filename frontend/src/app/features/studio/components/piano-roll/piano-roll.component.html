@@ -1,11 +1,11 @@
 <div class="piano-roll panel">
   <div class="panel-header">
     <h2>Piano Roll &mdash; {{ channelName() }}</h2>
-    <span class="hint">click to place notes</span>
+    <span class="hint">C0&ndash;C10 &middot; scroll for full range</span>
   </div>
-  <div class="piano-body">
+  <div class="piano-body" #body>
     @for (row of rows(); track row.label; let rowIndex = $index) {
-      <div class="piano-row">
+      <div class="piano-row" [attr.data-note]="row.label">
         <div class="key" [class.black]="row.black">{{ row.label }}</div>
         @for (s of steps(); track s) {
           <button

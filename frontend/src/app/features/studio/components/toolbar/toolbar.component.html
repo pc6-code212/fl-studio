@@ -4,11 +4,6 @@
     <button class="tbtn stop" title="Stop" (click)="stopPressed.emit()">&#9632;</button>
     <button class="tbtn play" [class.on]="isPlaying()" title="Play / Pause (Space)" (click)="playToggle.emit()">&#9654;</button>
     <button class="tbtn rec" [class.on]="isRecording()" title="Record" (click)="recordToggle.emit()">&#9679;</button>
-    <button
-      class="tbtn keys"
-      [class.on]="keyboardPiano()"
-      title="Computer keyboard as piano (Z-M / Q-U)"
-      (click)="keyboardPianoToggle.emit()">&#9834;</button>
   </div>
 
   <div class="mode-switch">
@@ -53,4 +48,18 @@
     </div>
     <span class="val">{{ masterVolume() }}</span>
   </div>
+
+  <button
+    class="tbtn keys"
+    [class.on]="keyboardPiano()"
+    title="Computer keyboard as piano (Z-M / Q-U)"
+    (click)="keyboardPianoToggle.emit()">
+    <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
+      <rect x="2.5" y="5" width="19" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" />
+      <path d="M7 19V9M12 19V9M17 19V9" stroke="currentColor" stroke-width="1.1" opacity="0.7" />
+      <rect x="5" y="5" width="3" height="7" rx="0.6" fill="currentColor" />
+      <rect x="10" y="5" width="3" height="7" rx="0.6" fill="currentColor" />
+      <rect x="15" y="5" width="3" height="7" rx="0.6" fill="currentColor" />
+    </svg>
+  </button>
 </section>

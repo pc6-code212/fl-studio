@@ -254,23 +254,38 @@ export class StudioStore implements OnDestroy {
   }
 
   private createPianoRows(): PianoRow[] {
-    const labels = ['C6', 'B5', 'A#5', 'A5', 'G#5', 'G5', 'F#5', 'F5', 'E5', 'D#5', 'D5', 'C#5', 'C5'];
-    const rows = labels.map(label => ({
-      label,
-      black: label.includes('#'),
-      notes: Array.from({ length: 16 }, () => false)
-    }));
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const labels: string[] = [];
+    for (let octave = 0; octave <= 10; octave++) {
+      for (const name of noteNames) {
+        labels.push(name + octave);
+      }
+    }
 
-    const melody: Array<[number, number[]]> = [
-      [0, [0, 4, 8, 12]],
-      [2, [2, 6, 10, 14]],
-      [4, [0, 6, 8]],
-      [7, [0, 4, 8, 12]],
-      [9, [2, 10]],
-      [11, [6, 14]]
+    const rows: PianoRow[] = labels
+      .slice()
+      .reverse()
+      .map(label => ({
+        label,
+        black: label.includes('#'),
+        notes: Array.from({ length: 16 }, () => false)
+      }));
+
+    const rowIndex = new Map(rows.map((row, index) => [row.label, index]));
+    const melody: Array<[string, number[]]> = [
+      ['C5', [0, 4, 8, 12]],
+      ['D#5', [2, 6, 10, 14]],
+      ['G5', [0, 6, 8]],
+      ['C6', [0, 4, 8, 12]],
+      ['A#5', [2, 10]],
+      ['F5', [6, 14]]
     ];
-    melody.forEach(([rowIndex, cols]) => {
-      cols.forEach(col => (rows[rowIndex].notes[col] = true));
+    melody.forEach(([label, cols]) => {
+      const index = rowIndex.get(label);
+      if (index === undefined) {
+        return;
+      }
+      cols.forEach(col => (rows[index].notes[col] = true));
     });
 
     return rows;

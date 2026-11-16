@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  ViewChild,
+  input,
+  output
+} from '@angular/core';
 import { PianoRow } from '@features/studio/models/studio.model';
 
 export interface NoteToggleEvent {
@@ -13,7 +21,7 @@ export interface NoteToggleEvent {
   styleUrl: './piano-roll.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PianoRollComponent {
+export class PianoRollComponent implements AfterViewInit {
   readonly rows = input.required<PianoRow[]>();
   readonly steps = input.required<number[]>();
   readonly currentStep = input.required<number>();
@@ -21,4 +29,23 @@ export class PianoRollComponent {
   readonly channelName = input.required<string>();
 
   readonly toggleNote = output<NoteToggleEvent>();
+
+  @ViewChild('body') private body?: ElementRef<HTMLElement>;
+
+  private readonly rowHeight = 22;
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.centerOnNote('C5'), 50);
+  }
+
+  centerOnNote(label: string): void {
+    const container = this.body?.nativeElement;
+    if (!container) {
+      return;
+    }
+    const index = this.rows().findIndex(row => row.label === label);
+    if (index >= 0) {
+      container.scrollTop = Math.max(0, index * this.rowHeight - container.clientHeight / 2);
+    }
+  }
 }
