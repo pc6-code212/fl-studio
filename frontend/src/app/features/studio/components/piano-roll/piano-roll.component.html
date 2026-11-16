@@ -1,7 +1,14 @@
-<div class="piano-roll panel">
+<div class="piano-roll panel" [class.collapsed]="collapsed()" [class.maximized]="maximized()">
   <div class="panel-header">
     <h2>Piano Roll &mdash; {{ channelName() }}</h2>
-    <span class="hint">C0&ndash;C10 &middot; scroll for full range</span>
+    <div class="header-actions">
+      <span class="hint">C0&ndash;C10 &middot; scroll for full range</span>
+      <div class="win-controls">
+        <button class="win-btn" title="Hide" (click)="collapseToggle.emit()">–</button>
+        <button class="win-btn" [title]="maximized() ? 'Restore' : 'Maximize'" (click)="maximizeToggle.emit()">{{ maximized() ? '❐' : '□' }}</button>
+        <button class="win-btn close" title="Close" (click)="closePanel.emit()">✕</button>
+      </div>
+    </div>
   </div>
   <div class="piano-body" #body>
     @for (row of rows(); track row.label; let rowIndex = $index) {

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  OnInit,
+  computed,
+  inject
+} from '@angular/core';
 import { BrowserPanelComponent } from '@features/studio/components/browser-panel/browser-panel.component';
 import { ChannelRackComponent } from '@features/studio/components/channel-rack/channel-rack.component';
 import { MixerPanelComponent } from '@features/studio/components/mixer-panel/mixer-panel.component';
@@ -25,8 +32,54 @@ import { StudioStore } from '@features/studio/services/studio.store';
 export class StudioPage implements OnInit {
   readonly store = inject(StudioStore);
 
+  readonly workspaceColumns = computed(() => {
+    const mixer = this.store.panels().mixer;
+    return mixer.open && !mixer.maximized
+      ? `212px minmax(0, 1fr) 6px ${this.store.mixerWidth()}px`
+      : '212px minmax(0, 1fr)';
+  });
+
+  readonly showRackSplitter = computed(() => {
+    const panels = this.store.panels();
+    return (
+      panels.channelRack.open &&
+      panels.pianoRoll.open &&
+      !panels.channelRack.collapsed &&
+      !panels.channelRack.maximized &&
+      !panels.pianoRoll.maximized
+    );
+  });
+
   ngOnInit(): void {
     this.store.loadLibrary();
+  }
+
+  onRackResizeStart(event: PointerEvent): void {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = this.store.rackHeight();
+    const move = (moveEvent: PointerEvent) =>
+      this.store.setRackHeight(startHeight + moveEvent.clientY - startY);
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+  }
+
+  onMixerResizeStart(event: PointerEvent): void {
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = this.store.mixerWidth();
+    const move = (moveEvent: PointerEvent) =>
+      this.store.setMixerWidth(startWidth - (moveEvent.clientX - startX));
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
   }
 
   @HostListener('window:keydown', ['$event'])

@@ -19,12 +19,17 @@ export class ChannelRackComponent {
   readonly selected = input.required<number>();
   readonly currentStep = input.required<number>();
   readonly isPlaying = input.required<boolean>();
+  readonly collapsed = input<boolean>(false);
+  readonly maximized = input<boolean>(false);
 
   readonly select = output<number>();
   readonly toggleStep = output<StepToggleEvent>();
   readonly toggleMute = output<number>();
   readonly toggleSolo = output<number>();
   readonly preview = output<Channel>();
+  readonly collapseToggle = output<void>();
+  readonly maximizeToggle = output<void>();
+  readonly closePanel = output<void>();
 
   knobAngle(value: number): number {
     return -135 + (value / 100) * 270;

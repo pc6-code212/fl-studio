@@ -20,11 +20,16 @@ export class MixerPanelComponent {
   readonly masterVolume = input.required<number>();
   readonly isPlaying = input.required<boolean>();
   readonly currentStep = input.required<number>();
+  readonly collapsed = input<boolean>(false);
+  readonly maximized = input<boolean>(false);
 
   readonly volumeChange = output<VolumeChangeEvent>();
   readonly masterVolumeChange = output<number>();
   readonly toggleMute = output<number>();
   readonly toggleSolo = output<number>();
+  readonly collapseToggle = output<void>();
+  readonly maximizeToggle = output<void>();
+  readonly closePanel = output<void>();
 
   knobAngle(value: number): number {
     return -135 + (value / 100) * 270;

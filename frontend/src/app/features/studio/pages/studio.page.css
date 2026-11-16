@@ -9,7 +9,6 @@
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: 212px minmax(0, 1fr) 316px;
   grid-template-rows: minmax(0, 1fr);
   gap: 8px;
   padding: 8px;
@@ -18,7 +17,31 @@
 .center {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   min-height: 0;
   overflow: hidden;
+}
+
+.hsplit {
+  flex: 0 0 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: row-resize;
+}
+
+.hsplit:hover {
+  background: var(--accent);
+}
+
+.vsplit {
+  width: 6px;
+  align-self: stretch;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: col-resize;
+}
+
+.vsplit:hover {
+  background: var(--accent);
 }

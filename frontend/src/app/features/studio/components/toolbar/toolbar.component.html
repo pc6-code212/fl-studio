@@ -62,4 +62,22 @@
       <rect x="15" y="5" width="3" height="7" rx="0.6" fill="currentColor" />
     </svg>
   </button>
+
+  <div class="panel-toggles">
+    <button
+      class="panel-btn"
+      [class.active]="panels().channelRack.open && !panels().channelRack.collapsed"
+      title="Show / hide Channel Rack"
+      (click)="panelToggle.emit('channelRack')">RACK</button>
+    <button
+      class="panel-btn"
+      [class.active]="panels().pianoRoll.open && !panels().pianoRoll.collapsed"
+      title="Show / hide Piano Roll"
+      (click)="panelToggle.emit('pianoRoll')">PIANO</button>
+    <button
+      class="panel-btn"
+      [class.active]="panels().mixer.open && !panels().mixer.collapsed"
+      title="Show / hide Mixer"
+      (click)="panelToggle.emit('mixer')">MIXER</button>
+  </div>
 </section>

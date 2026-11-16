@@ -43,3 +43,13 @@ export interface BrowserSection {
   title: string;
   items: string[];
 }
+
+export type PanelId = 'channelRack' | 'pianoRoll' | 'mixer';
+
+export interface PanelState {
+  open: boolean;
+  collapsed: boolean;
+  maximized: boolean;
+}
+
+export type PanelStates = Record<PanelId, PanelState>;

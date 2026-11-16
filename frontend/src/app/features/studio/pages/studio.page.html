@@ -8,17 +8,22 @@
   [patternNumber]="store.patternNumber()"
   [patternName]="store.patternName()"
   [keyboardPiano]="store.keyboardPiano()"
+  [panels]="store.panels()"
   (playToggle)="store.togglePlay()"
   (stopPressed)="store.stop()"
   (recordToggle)="store.toggleRecord()"
   (keyboardPianoToggle)="store.toggleKeyboardPiano()"
+  (panelToggle)="store.togglePanel($event)"
   (songModeChange)="store.setSongMode($event)"
   (bpmChange)="store.setBpm($event)"
   (swingChange)="store.setSwing($event)"
   (prevPattern)="store.prevPattern()"
   (nextPattern)="store.nextPattern()" />
 
-<main class="workspace">
+<main
+  class="workspace"
+  [style.grid-template-columns]="workspaceColumns()"
+  [style.--rack-h]="store.rackHeight() + 'px'">
   <app-browser-panel
     [tab]="store.activeBrowserTab()"
     [sections]="store.browserSections"
@@ -32,36 +37,64 @@
     (previewFile)="store.previewFile($event)" />
 
   <section class="center">
-    <app-channel-rack
-      [channels]="store.channels()"
-      [steps]="store.steps"
-      [selected]="store.selectedChannel()"
-      [currentStep]="store.currentStep()"
-      [isPlaying]="store.isPlaying()"
-      (select)="store.selectChannel($event)"
-      (toggleStep)="store.toggleStep($event.id, $event.step)"
-      (toggleMute)="store.toggleMute($event)"
-      (toggleSolo)="store.toggleSolo($event)"
-      (preview)="store.previewChannel($event)" />
+    @if (store.panels().channelRack.open) {
+      <app-channel-rack
+        [channels]="store.channels()"
+        [steps]="store.steps"
+        [selected]="store.selectedChannel()"
+        [currentStep]="store.currentStep()"
+        [isPlaying]="store.isPlaying()"
+        [collapsed]="store.panels().channelRack.collapsed"
+        [maximized]="store.panels().channelRack.maximized"
+        (select)="store.selectChannel($event)"
+        (toggleStep)="store.toggleStep($event.id, $event.step)"
+        (toggleMute)="store.toggleMute($event)"
+        (toggleSolo)="store.toggleSolo($event)"
+        (preview)="store.previewChannel($event)"
+        (collapseToggle)="store.togglePanelCollapsed('channelRack')"
+        (maximizeToggle)="store.togglePanelMaximized('channelRack')"
+        (closePanel)="store.closePanel('channelRack')" />
 
-    <app-piano-roll
-      [rows]="store.pianoRows()"
-      [steps]="store.steps"
-      [currentStep]="store.currentStep()"
-      [isPlaying]="store.isPlaying()"
-      [channelName]="store.selected().name"
-      (toggleNote)="store.toggleNote($event.row, $event.step)" />
+      @if (showRackSplitter()) {
+        <div class="hsplit" title="Drag to resize" (pointerdown)="onRackResizeStart($event)"></div>
+      }
+    }
+
+    @if (store.panels().pianoRoll.open) {
+      <app-piano-roll
+        [rows]="store.pianoRows()"
+        [steps]="store.steps"
+        [currentStep]="store.currentStep()"
+        [isPlaying]="store.isPlaying()"
+        [channelName]="store.selected().name"
+        [collapsed]="store.panels().pianoRoll.collapsed"
+        [maximized]="store.panels().pianoRoll.maximized"
+        (toggleNote)="store.toggleNote($event.row, $event.step)"
+        (collapseToggle)="store.togglePanelCollapsed('pianoRoll')"
+        (maximizeToggle)="store.togglePanelMaximized('pianoRoll')"
+        (closePanel)="store.closePanel('pianoRoll')" />
+    }
   </section>
 
-  <app-mixer-panel
-    [channels]="store.channels()"
-    [masterVolume]="store.masterVolume()"
-    [isPlaying]="store.isPlaying()"
-    [currentStep]="store.currentStep()"
-    (volumeChange)="store.setChannelVolume($event.id, $event.volume)"
-    (masterVolumeChange)="store.setMasterVolume($event)"
-    (toggleMute)="store.toggleMute($event)"
-    (toggleSolo)="store.toggleSolo($event)" />
+  @if (store.panels().mixer.open) {
+    @if (!store.panels().mixer.maximized) {
+      <div class="vsplit" title="Drag to resize" (pointerdown)="onMixerResizeStart($event)"></div>
+    }
+    <app-mixer-panel
+      [channels]="store.channels()"
+      [masterVolume]="store.masterVolume()"
+      [isPlaying]="store.isPlaying()"
+      [currentStep]="store.currentStep()"
+      [collapsed]="store.panels().mixer.collapsed"
+      [maximized]="store.panels().mixer.maximized"
+      (volumeChange)="store.setChannelVolume($event.id, $event.volume)"
+      (masterVolumeChange)="store.setMasterVolume($event)"
+      (toggleMute)="store.toggleMute($event)"
+      (toggleSolo)="store.toggleSolo($event)"
+      (collapseToggle)="store.togglePanelCollapsed('mixer')"
+      (maximizeToggle)="store.togglePanelMaximized('mixer')"
+      (closePanel)="store.closePanel('mixer')" />
+  }
 </main>
 
 <app-status-bar

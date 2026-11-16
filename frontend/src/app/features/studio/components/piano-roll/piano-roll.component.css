@@ -9,6 +9,15 @@
   min-height: 0;
 }
 
+.piano-roll.collapsed {
+  flex: 0 0 auto;
+  height: auto;
+}
+
+.piano-roll.collapsed .piano-body {
+  display: none;
+}
+
 .piano-body {
   flex: 1;
   min-height: 0;

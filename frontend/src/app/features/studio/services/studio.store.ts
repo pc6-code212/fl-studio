@@ -9,6 +9,8 @@ import {
   Channel,
   LibraryNode,
   LibraryResponse,
+  PanelId,
+  PanelStates,
   PianoRow
 } from '../models/studio.model';
 
@@ -51,6 +53,14 @@ export class StudioStore implements OnDestroy {
   readonly libraryLoading = signal(false);
   readonly libraryError = signal('');
   readonly openMessage = signal('');
+
+  readonly panels = signal<PanelStates>({
+    channelRack: { open: true, collapsed: false, maximized: false },
+    pianoRoll: { open: true, collapsed: false, maximized: false },
+    mixer: { open: true, collapsed: false, maximized: false }
+  });
+  readonly rackHeight = signal(320);
+  readonly mixerWidth = signal(316);
 
   readonly patternName = computed(
     () => this.patternNames[(this.patternNumber() - 1) % this.patternNames.length]
@@ -123,6 +133,57 @@ export class StudioStore implements OnDestroy {
     if (label) {
       this.engine.playPianoNote(label);
     }
+  }
+
+  togglePanel(id: PanelId): void {
+    this.panels.update(states => {
+      const current = states[id];
+      const visible = current.open && !current.collapsed;
+      return {
+        ...states,
+        [id]: visible
+          ? { ...current, open: false, maximized: false }
+          : { ...current, open: true, collapsed: false }
+      };
+    });
+  }
+
+  closePanel(id: PanelId): void {
+    this.panels.update(states => ({
+      ...states,
+      [id]: { ...states[id], open: false, maximized: false }
+    }));
+  }
+
+  togglePanelCollapsed(id: PanelId): void {
+    this.panels.update(states => {
+      const current = states[id];
+      const collapsed = !current.collapsed;
+      return {
+        ...states,
+        [id]: { ...current, open: true, collapsed, maximized: collapsed ? false : current.maximized }
+      };
+    });
+  }
+
+  togglePanelMaximized(id: PanelId): void {
+    this.panels.update(states => {
+      const maximized = !states[id].maximized;
+      const next = {} as PanelStates;
+      (Object.keys(states) as PanelId[]).forEach(key => {
+        next[key] = { ...states[key], maximized: key === id ? maximized : false };
+      });
+      next[id] = { ...next[id], open: true, collapsed: false };
+      return next;
+    });
+  }
+
+  setRackHeight(height: number): void {
+    this.rackHeight.set(clamp(Math.round(height), 120, 620));
+  }
+
+  setMixerWidth(width: number): void {
+    this.mixerWidth.set(clamp(Math.round(width), 220, 640));
   }
 
   selectChannel(index: number): void {

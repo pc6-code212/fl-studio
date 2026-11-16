@@ -27,8 +27,13 @@ export class PianoRollComponent implements AfterViewInit {
   readonly currentStep = input.required<number>();
   readonly isPlaying = input.required<boolean>();
   readonly channelName = input.required<string>();
+  readonly collapsed = input<boolean>(false);
+  readonly maximized = input<boolean>(false);
 
   readonly toggleNote = output<NoteToggleEvent>();
+  readonly collapseToggle = output<void>();
+  readonly maximizeToggle = output<void>();
+  readonly closePanel = output<void>();
 
   @ViewChild('body') private body?: ElementRef<HTMLElement>;
 
