@@ -29,10 +29,13 @@ export class PianoRollComponent implements AfterViewInit {
   readonly channelName = input.required<string>();
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
+  readonly floating = input<boolean>(false);
 
   readonly toggleNote = output<NoteToggleEvent>();
   readonly collapseToggle = output<void>();
   readonly maximizeToggle = output<void>();
+  readonly floatToggle = output<void>();
+  readonly headerDrag = output<PointerEvent>();
   readonly closePanel = output<void>();
 
   @ViewChild('body') private body?: ElementRef<HTMLElement>;
@@ -41,6 +44,13 @@ export class PianoRollComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     setTimeout(() => this.centerOnNote('C5'), 50);
+  }
+
+  onHeaderPointerDown(event: PointerEvent): void {
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    this.headerDrag.emit(event);
   }
 
   centerOnNote(label: string): void {

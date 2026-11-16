@@ -50,6 +50,11 @@ export interface PanelState {
   open: boolean;
   collapsed: boolean;
   maximized: boolean;
+  floating: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export type PanelStates = Record<PanelId, PanelState>;

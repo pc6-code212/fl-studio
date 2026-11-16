@@ -1,11 +1,12 @@
 <div class="piano-roll panel" [class.collapsed]="collapsed()" [class.maximized]="maximized()">
-  <div class="panel-header">
+  <div class="panel-header" (pointerdown)="onHeaderPointerDown($event)">
     <h2>Piano Roll &mdash; {{ channelName() }}</h2>
     <div class="header-actions">
       <span class="hint">C0&ndash;C10 &middot; scroll for full range</span>
       <div class="win-controls">
         <button class="win-btn" title="Hide" (click)="collapseToggle.emit()">–</button>
         <button class="win-btn" [title]="maximized() ? 'Restore' : 'Maximize'" (click)="maximizeToggle.emit()">{{ maximized() ? '❐' : '□' }}</button>
+        <button class="win-btn" [title]="floating() ? 'Dock panel' : 'Pop out panel'" (click)="floatToggle.emit()">{{ floating() ? '↙' : '↗' }}</button>
         <button class="win-btn close" title="Close" (click)="closePanel.emit()">✕</button>
       </div>
     </div>

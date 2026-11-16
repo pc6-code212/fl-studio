@@ -140,3 +140,49 @@ input[type="range"]::-webkit-slider-thumb {
   max-height: none;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.65);
 }
+.panel-slot {
+  display: contents;
+}
+
+.panel-slot.floating {
+  display: block;
+  position: fixed;
+  z-index: 130;
+  border-radius: 6px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6);
+}
+
+.panel-slot.floating .panel {
+  height: 100%;
+  max-height: none;
+}
+
+.panel-slot.floating.collapsed {
+  height: auto !important;
+}
+
+.panel-slot.floating.collapsed .panel {
+  height: auto;
+}
+
+.panel-slot.floating .panel-header {
+  cursor: move;
+}
+
+.panel-slot.floating .win-btn {
+  cursor: pointer;
+}
+
+.resize-grip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  z-index: 6;
+  cursor: nwse-resize;
+  background:
+    linear-gradient(135deg, transparent 50%, rgba(255, 255, 255, 0.35) 51%, transparent 53%),
+    linear-gradient(135deg, transparent 66%, rgba(255, 255, 255, 0.35) 67%, transparent 69%);
+  border-bottom-right-radius: 6px;
+}

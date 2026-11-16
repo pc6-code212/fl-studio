@@ -22,6 +22,7 @@ export class MixerPanelComponent {
   readonly currentStep = input.required<number>();
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
+  readonly floating = input<boolean>(false);
 
   readonly volumeChange = output<VolumeChangeEvent>();
   readonly masterVolumeChange = output<number>();
@@ -29,7 +30,16 @@ export class MixerPanelComponent {
   readonly toggleSolo = output<number>();
   readonly collapseToggle = output<void>();
   readonly maximizeToggle = output<void>();
+  readonly floatToggle = output<void>();
+  readonly headerDrag = output<PointerEvent>();
   readonly closePanel = output<void>();
+
+  onHeaderPointerDown(event: PointerEvent): void {
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    this.headerDrag.emit(event);
+  }
 
   knobAngle(value: number): number {
     return -135 + (value / 100) * 270;

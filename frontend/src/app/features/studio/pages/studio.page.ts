@@ -12,6 +12,7 @@ import { MixerPanelComponent } from '@features/studio/components/mixer-panel/mix
 import { PianoRollComponent } from '@features/studio/components/piano-roll/piano-roll.component';
 import { StatusBarComponent } from '@features/studio/components/status-bar/status-bar.component';
 import { ToolbarComponent } from '@features/studio/components/toolbar/toolbar.component';
+import { PanelId } from '@features/studio/models/studio.model';
 import { StudioStore } from '@features/studio/services/studio.store';
 
 @Component({
@@ -34,7 +35,7 @@ export class StudioPage implements OnInit {
 
   readonly workspaceColumns = computed(() => {
     const mixer = this.store.panels().mixer;
-    return mixer.open && !mixer.maximized
+    return mixer.open && !mixer.maximized && !mixer.floating
       ? `212px minmax(0, 1fr) 6px ${this.store.mixerWidth()}px`
       : '212px minmax(0, 1fr)';
   });
@@ -46,7 +47,9 @@ export class StudioPage implements OnInit {
       panels.pianoRoll.open &&
       !panels.channelRack.collapsed &&
       !panels.channelRack.maximized &&
-      !panels.pianoRoll.maximized
+      !panels.channelRack.floating &&
+      !panels.pianoRoll.maximized &&
+      !panels.pianoRoll.floating
     );
   });
 
@@ -74,6 +77,52 @@ export class StudioPage implements OnInit {
     const startWidth = this.store.mixerWidth();
     const move = (moveEvent: PointerEvent) =>
       this.store.setMixerWidth(startWidth - (moveEvent.clientX - startX));
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+  }
+
+  onPanelDragStart(id: PanelId, event: PointerEvent): void {
+    const panel = this.store.panels()[id];
+    if (!panel.floating) {
+      return;
+    }
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const originX = panel.x;
+    const originY = panel.y;
+    const move = (moveEvent: PointerEvent) =>
+      this.store.setPanelPosition(
+        id,
+        originX + moveEvent.clientX - startX,
+        originY + moveEvent.clientY - startY
+      );
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+  }
+
+  onPanelResizeStart(id: PanelId, event: Event): void {
+    const pointer = event as PointerEvent;
+    const panel = this.store.panels()[id];
+    event.preventDefault();
+    const startX = pointer.clientX;
+    const startY = pointer.clientY;
+    const startWidth = panel.width;
+    const startHeight = panel.height;
+    const move = (moveEvent: PointerEvent) =>
+      this.store.setPanelSize(
+        id,
+        startWidth + moveEvent.clientX - startX,
+        startHeight + moveEvent.clientY - startY
+      );
     const stop = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);

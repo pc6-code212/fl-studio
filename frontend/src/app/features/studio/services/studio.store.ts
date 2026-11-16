@@ -14,6 +14,12 @@ import {
   PianoRow
 } from '../models/studio.model';
 
+const PANEL_MIN_SIZE: Record<PanelId, { width: number; height: number }> = {
+  channelRack: { width: 460, height: 150 },
+  pianoRoll: { width: 420, height: 220 },
+  mixer: { width: 360, height: 240 }
+};
+
 @Injectable({ providedIn: 'root' })
 export class StudioStore implements OnDestroy {
   private readonly engine = inject(AudioEngineService);
@@ -55,9 +61,36 @@ export class StudioStore implements OnDestroy {
   readonly openMessage = signal('');
 
   readonly panels = signal<PanelStates>({
-    channelRack: { open: true, collapsed: false, maximized: false },
-    pianoRoll: { open: true, collapsed: false, maximized: false },
-    mixer: { open: true, collapsed: false, maximized: false }
+    channelRack: {
+      open: true,
+      collapsed: false,
+      maximized: false,
+      floating: false,
+      x: 280,
+      y: 190,
+      width: 780,
+      height: 320
+    },
+    pianoRoll: {
+      open: true,
+      collapsed: false,
+      maximized: false,
+      floating: false,
+      x: 340,
+      y: 250,
+      width: 820,
+      height: 420
+    },
+    mixer: {
+      open: true,
+      collapsed: false,
+      maximized: false,
+      floating: false,
+      x: 880,
+      y: 170,
+      width: 560,
+      height: 520
+    }
   });
   readonly rackHeight = signal(320);
   readonly mixerWidth = signal(316);
@@ -173,9 +206,51 @@ export class StudioStore implements OnDestroy {
       (Object.keys(states) as PanelId[]).forEach(key => {
         next[key] = { ...states[key], maximized: key === id ? maximized : false };
       });
-      next[id] = { ...next[id], open: true, collapsed: false };
+      next[id] = { ...next[id], open: true, collapsed: false, floating: false };
       return next;
     });
+  }
+
+  togglePanelFloating(id: PanelId): void {
+    this.panels.update(states => {
+      const current = states[id];
+      return {
+        ...states,
+        [id]: {
+          ...current,
+          open: true,
+          collapsed: false,
+          maximized: false,
+          floating: !current.floating
+        }
+      };
+    });
+  }
+
+  setPanelPosition(id: PanelId, x: number, y: number): void {
+    this.panels.update(states => {
+      const current = states[id];
+      return {
+        ...states,
+        [id]: {
+          ...current,
+          x: clamp(Math.round(x), 0, Math.max(0, window.innerWidth - 120)),
+          y: clamp(Math.round(y), 30, Math.max(30, window.innerHeight - 60))
+        }
+      };
+    });
+  }
+
+  setPanelSize(id: PanelId, width: number, height: number): void {
+    const min = PANEL_MIN_SIZE[id];
+    this.panels.update(states => ({
+      ...states,
+      [id]: {
+        ...states[id],
+        width: clamp(Math.round(width), min.width, window.innerWidth),
+        height: clamp(Math.round(height), min.height, window.innerHeight)
+      }
+    }));
   }
 
   setRackHeight(height: number): void {
