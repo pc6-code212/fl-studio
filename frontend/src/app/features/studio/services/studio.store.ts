@@ -92,6 +92,7 @@ export class StudioStore implements OnDestroy {
       height: 520
     }
   });
+  readonly frontPanel = signal<PanelId>('mixer');
   readonly rackHeight = signal(320);
   readonly mixerWidth = signal(316);
 
@@ -212,19 +213,34 @@ export class StudioStore implements OnDestroy {
   }
 
   togglePanelFloating(id: PanelId): void {
-    this.panels.update(states => {
-      const current = states[id];
-      return {
-        ...states,
-        [id]: {
-          ...current,
-          open: true,
-          collapsed: false,
-          maximized: false,
-          floating: !current.floating
-        }
-      };
-    });
+    const current = this.panels()[id];
+    const floating = !current.floating;
+    this.panels.update(states => ({
+      ...states,
+      [id]: {
+        ...states[id],
+        open: true,
+        collapsed: false,
+        maximized: false,
+        floating
+      }
+    }));
+    if (floating) {
+      this.frontPanel.set(id);
+    } else if (this.frontPanel() === id) {
+      const other = (Object.keys(this.panels()) as PanelId[]).find(
+        key => key !== id && this.panels()[key].floating
+      );
+      if (other) {
+        this.frontPanel.set(other);
+      }
+    }
+  }
+
+  bringPanelToFront(id: PanelId): void {
+    if (this.frontPanel() !== id) {
+      this.frontPanel.set(id);
+    }
   }
 
   setPanelPosition(id: PanelId, x: number, y: number): void {

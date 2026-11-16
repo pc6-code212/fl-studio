@@ -87,6 +87,7 @@ export class StudioPage implements OnInit {
 
   onPanelDragStart(id: PanelId, event: PointerEvent): void {
     const panel = this.store.panels()[id];
+    this.store.bringPanelToFront(id);
     if (!panel.floating) {
       return;
     }

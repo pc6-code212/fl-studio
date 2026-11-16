@@ -22,7 +22,6 @@ export class MixerPanelComponent {
   readonly currentStep = input.required<number>();
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
-  readonly floating = input<boolean>(false);
 
   readonly volumeChange = output<VolumeChangeEvent>();
   readonly masterVolumeChange = output<number>();
@@ -33,6 +32,13 @@ export class MixerPanelComponent {
   readonly floatToggle = output<void>();
   readonly headerDrag = output<PointerEvent>();
   readonly closePanel = output<void>();
+
+  onHeaderDoubleClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    this.floatToggle.emit();
+  }
 
   onHeaderPointerDown(event: PointerEvent): void {
     if ((event.target as HTMLElement).closest('button')) {
