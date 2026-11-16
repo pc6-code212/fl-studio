@@ -18,10 +18,12 @@ export class ToolbarComponent {
   readonly songMode = input.required<boolean>();
   readonly patternNumber = input.required<number>();
   readonly patternName = input.required<string>();
+  readonly keyboardPiano = input.required<boolean>();
 
   readonly playToggle = output<void>();
   readonly stopPressed = output<void>();
   readonly recordToggle = output<void>();
+  readonly keyboardPianoToggle = output<void>();
   readonly songModeChange = output<boolean>();
   readonly bpmChange = output<number>();
   readonly swingChange = output<number>();

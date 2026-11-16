@@ -37,6 +37,12 @@ export class StudioStore implements OnDestroy {
   readonly selectedChannel = signal(0);
   readonly patternNumber = signal(1);
   readonly activeBrowserTab = signal<BrowserTab>('packs');
+  readonly keyboardPiano = signal(true);
+
+  readonly pianoKeyMap: Record<string, string> = {
+    z: 'C4', s: 'C#4', x: 'D4', d: 'D#4', c: 'E4', v: 'F4', g: 'F#4', b: 'G4', h: 'G#4', n: 'A4', j: 'A#4', m: 'B4',
+    q: 'C5', '2': 'C#5', w: 'D5', '3': 'D#5', e: 'E5', r: 'F5', '5': 'F#5', t: 'G5', '6': 'G#5', y: 'A5', '7': 'A#5', u: 'B5'
+  };
 
   readonly channels = signal<Channel[]>(this.createChannels());
   readonly pianoRows = signal<PianoRow[]>(this.createPianoRows());
@@ -106,6 +112,17 @@ export class StudioStore implements OnDestroy {
 
   setBrowserTab(tab: BrowserTab): void {
     this.activeBrowserTab.set(tab);
+  }
+
+  toggleKeyboardPiano(): void {
+    this.keyboardPiano.update(enabled => !enabled);
+  }
+
+  playKeyboardNote(key: string): void {
+    const label = this.pianoKeyMap[key.toLowerCase()];
+    if (label) {
+      this.engine.playPianoNote(label);
+    }
   }
 
   selectChannel(index: number): void {

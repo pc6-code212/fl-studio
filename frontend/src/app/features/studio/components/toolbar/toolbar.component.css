@@ -55,6 +55,18 @@
   box-shadow: 0 0 10px rgba(226, 87, 76, 0.5);
 }
 
+.tbtn.keys {
+  width: 30px;
+  font-size: 15px;
+}
+
+.tbtn.keys.on {
+  background: linear-gradient(180deg, #4a4026, #2e2a1d);
+  color: var(--accent);
+  border-color: #6b4400;
+  box-shadow: 0 0 8px rgba(245, 166, 35, 0.4);
+}
+
 .tbtn.stop {
   color: #e2574c;
 }

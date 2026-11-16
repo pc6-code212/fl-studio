@@ -4,6 +4,11 @@
     <button class="tbtn stop" title="Stop" (click)="stopPressed.emit()">&#9632;</button>
     <button class="tbtn play" [class.on]="isPlaying()" title="Play / Pause (Space)" (click)="playToggle.emit()">&#9654;</button>
     <button class="tbtn rec" [class.on]="isRecording()" title="Record" (click)="recordToggle.emit()">&#9679;</button>
+    <button
+      class="tbtn keys"
+      [class.on]="keyboardPiano()"
+      title="Computer keyboard as piano (Z-M / Q-U)"
+      (click)="keyboardPianoToggle.emit()">&#9834;</button>
   </div>
 
   <div class="mode-switch">
