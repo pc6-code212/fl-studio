@@ -103,7 +103,7 @@
           [class.muted]="ch.muted"
           (click)="selectChannel(i)">
 
-          <button class="ch-name" [style.border-left-color]="ch.color">
+          <button class="ch-name" [style.border-left-color]="ch.color" (click)="previewChannel(ch)">
             <span class="led" [style.background]="ch.color"></span>
             <span class="ch-label">{{ ch.name }}</span>
           </button>
@@ -178,7 +178,7 @@
           <div class="strip-meter">
             <div class="meter-fill" [style.height.%]="isPlaying ? 74 : 0"></div>
           </div>
-          <input class="fader" type="range" min="0" max="100" [(ngModel)]="masterVolume">
+          <input class="fader" type="range" min="0" max="100" [(ngModel)]="masterVolume" (ngModelChange)="onMasterVolumeChange()">
           <div class="strip-value">{{ masterVolume }}</div>
           <div class="strip-name master">Master</div>
         </div>
@@ -190,6 +190,6 @@
     <span class="status-item">Pattern {{ patternNumber }}: {{ patternName }}</span>
     <span class="status-item">Selected: <b>{{ selected.name }}</b></span>
     <span class="status-item">BPM {{ bpm }} &middot; Swing {{ swing }}%</span>
-    <span class="status-right">Space = Play/Stop &middot; FL Studio Angular UI</span>
+    <span class="status-right">Space = Play/Stop &middot; click steps / keys to hear sound</span>
   </footer>
 </div>
