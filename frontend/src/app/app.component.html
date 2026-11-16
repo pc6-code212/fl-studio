@@ -1,0 +1,195 @@
+<div class="fl-app">
+  <header class="titlebar">
+    <div class="logo"><span class="logo-mark">FL</span><span class="logo-text">STUDIO</span></div>
+    <nav class="menus">
+      <span>File</span>
+      <span>Edit</span>
+      <span>Add</span>
+      <span>Pattern</span>
+      <span>View</span>
+      <span>Options</span>
+      <span>Tools</span>
+      <span>Help</span>
+    </nav>
+    <div class="titlebar-right">
+      <span class="cpu">CPU <b>12%</b></span>
+      <span class="brand-note">Angular Audio Workstation</span>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <div class="transport">
+      <button class="tbtn" title="Rewind" (click)="stop()">&#9198;</button>
+      <button class="tbtn stop" title="Stop" (click)="stop()">&#9632;</button>
+      <button class="tbtn play" [class.on]="isPlaying" title="Play / Pause (Space)" (click)="togglePlay()">&#9654;</button>
+      <button class="tbtn rec" [class.on]="isRecording" title="Record" (click)="toggleRecord()">&#9679;</button>
+    </div>
+
+    <div class="mode-switch">
+      <button [class.active]="!songMode" (click)="songMode = false">PAT</button>
+      <button [class.active]="songMode" (click)="songMode = true">SONG</button>
+    </div>
+
+    <div class="pattern-select">
+      <button class="tbtn sm" (click)="prevPattern()">&#8249;</button>
+      <div class="pattern-display">
+        <span class="pattern-num">Pattern {{ patternNumber }}</span>
+        <span class="pattern-name">{{ patternName }}</span>
+      </div>
+      <button class="tbtn sm" (click)="nextPattern()">&#8250;</button>
+    </div>
+
+    <div class="tempo">
+      <label>BPM</label>
+      <input type="number" min="20" max="300" [(ngModel)]="bpm" (ngModelChange)="onBpmChange()">
+    </div>
+
+    <div class="swing">
+      <label>Swing</label>
+      <input type="range" min="0" max="100" [(ngModel)]="swing">
+      <span class="val">{{ swing }}%</span>
+    </div>
+
+    <div class="master">
+      <label>Master</label>
+      <div class="meter horizontal">
+        <div class="meter-fill" [style.width.%]="isPlaying ? 74 : 0"></div>
+      </div>
+      <span class="val">{{ masterVolume }}</span>
+    </div>
+  </section>
+
+  <main class="workspace">
+    <aside class="browser panel">
+      <div class="panel-header">
+        <h2>Browser</h2>
+        <span class="hint">presets</span>
+      </div>
+      <div class="browser-tabs">
+        <button [class.active]="activeBrowserTab === 'packs'" (click)="activeBrowserTab = 'packs'">Packs</button>
+        <button [class.active]="activeBrowserTab === 'files'" (click)="activeBrowserTab = 'files'">Files</button>
+        <button [class.active]="activeBrowserTab === 'plugins'" (click)="activeBrowserTab = 'plugins'">Plugins</button>
+      </div>
+      <div class="browser-list">
+        <div class="browser-section" *ngFor="let section of browserSections">
+          <div class="browser-section-title">&#9662; {{ section.title }}</div>
+          <ul>
+            <li *ngFor="let item of section.items">
+              <span class="folder-icon">&#128193;</span>{{ item }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </aside>
+
+    <section class="center">
+      <div class="channel-rack panel">
+        <div class="panel-header">
+          <h2>Channel Rack &mdash; {{ patternName }}</h2>
+          <span class="hint">{{ channels.length }} channels &middot; 16 steps</span>
+        </div>
+
+        <div class="rack-ruler">
+          <span class="cell"></span><span class="cell"></span><span class="cell"></span>
+          <span class="cell"></span><span class="cell"></span>
+          <span class="step-num" *ngFor="let s of steps" [class.beat]="s % 4 === 0">{{ s + 1 }}</span>
+        </div>
+
+        <div class="rack-body">
+        <div
+          class="rack-row"
+          *ngFor="let ch of channels; let i = index"
+          [class.selected]="i === selectedChannel"
+          [class.muted]="ch.muted"
+          (click)="selectChannel(i)">
+
+          <button class="ch-name" [style.border-left-color]="ch.color">
+            <span class="led" [style.background]="ch.color"></span>
+            <span class="ch-label">{{ ch.name }}</span>
+          </button>
+
+          <button class="mini-btn mute" [class.on]="ch.muted" title="Mute" (click)="toggleMute(ch, $event)">M</button>
+          <button class="mini-btn solo" [class.on]="ch.solo" title="Solo" (click)="toggleSolo(ch, $event)">S</button>
+
+          <div class="knob vol" [title]="'Volume ' + ch.volume">
+            <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.volume) + 'deg)'"></div>
+          </div>
+          <div class="knob pan" [title]="'Pan ' + ch.pan">
+            <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.pan) + 'deg)'"></div>
+          </div>
+
+          <button
+            class="step"
+            *ngFor="let s of steps"
+            [class.beat]="s % 4 === 0"
+            [class.active]="ch.steps[s]"
+            [class.playing]="isPlaying && s === currentStep"
+            [style.--ch-color]="ch.color"
+            (click)="toggleStep(ch, s)">
+          </button>
+        </div>
+        </div>
+      </div>
+
+      <div class="piano-roll panel">
+        <div class="panel-header">
+          <h2>Piano Roll &mdash; {{ selected.name }}</h2>
+          <span class="hint">click to place notes</span>
+        </div>
+        <div class="piano-body">
+          <div class="piano-row" *ngFor="let row of pianoRows">
+            <div class="key" [class.black]="row.black">{{ row.label }}</div>
+            <button
+              class="note-cell"
+              *ngFor="let s of steps"
+              [class.black]="row.black"
+              [class.beat]="s % 4 === 0"
+              [class.on]="row.notes[s]"
+              [class.playing]="isPlaying && s === currentStep"
+              (click)="toggleNote(row, s)">
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="mixer panel">
+      <div class="panel-header">
+        <h2>Mixer</h2>
+        <span class="hint">master bus</span>
+      </div>
+      <div class="mixer-strips">
+        <div class="strip" *ngFor="let ch of mixerChannels; let i = index" [class.muted]="ch.muted">
+          <div class="pan-knob">
+            <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.pan) + 'deg)'"></div>
+          </div>
+          <div class="strip-meter">
+            <div class="meter-fill" [style.height.%]="meterLevel(i)"></div>
+          </div>
+          <input class="fader" type="range" min="0" max="100" [(ngModel)]="ch.volume">
+          <div class="strip-value">{{ ch.volume }}</div>
+          <button class="mini-btn mute" [class.on]="ch.muted" (click)="toggleMute(ch, $event)">M</button>
+          <button class="mini-btn solo" [class.on]="ch.solo" (click)="toggleSolo(ch, $event)">S</button>
+          <div class="strip-name" [style.color]="ch.color">{{ ch.name }}</div>
+        </div>
+
+        <div class="strip master-strip">
+          <div class="master-tag">MASTER</div>
+          <div class="strip-meter">
+            <div class="meter-fill" [style.height.%]="isPlaying ? 74 : 0"></div>
+          </div>
+          <input class="fader" type="range" min="0" max="100" [(ngModel)]="masterVolume">
+          <div class="strip-value">{{ masterVolume }}</div>
+          <div class="strip-name master">Master</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="statusbar">
+    <span class="status-item">Pattern {{ patternNumber }}: {{ patternName }}</span>
+    <span class="status-item">Selected: <b>{{ selected.name }}</b></span>
+    <span class="status-item">BPM {{ bpm }} &middot; Swing {{ swing }}%</span>
+    <span class="status-right">Space = Play/Stop &middot; FL Studio Angular UI</span>
+  </footer>
+</div>
