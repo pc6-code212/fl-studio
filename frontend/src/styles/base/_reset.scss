@@ -1,0 +1,46 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--bg);
+  user-select: none;
+}
+
+app-root {
+  display: block;
+  height: 100%;
+}
+
+button {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #17181b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3b3f45;
+  border-radius: 5px;
+  border: 2px solid #17181b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4d525a;
+}

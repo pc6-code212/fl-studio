@@ -1,0 +1,118 @@
+.mixer {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mixer-strips {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 6px;
+}
+
+.strip {
+  flex: 0 0 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 3px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #2c2f34, #202226);
+  border: 1px solid #0f1012;
+}
+
+.strip.muted {
+  opacity: 0.5;
+}
+
+.pan-knob {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a4e55, #1c1e21 70%);
+  border: 1px solid #0c0d0e;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.pan-knob .knob-dial {
+  height: 7px;
+  transform-origin: 50% 8px;
+  top: 3px;
+}
+
+.strip-meter {
+  width: 10px;
+  height: 34px;
+  background: #101114;
+  border: 1px solid #08090a;
+  border-radius: 2px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.strip-meter .meter-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #e2574c, #d8c049 40%, #63c74d);
+}
+
+.fader {
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 22px;
+  height: 104px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.fader::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 10px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #d8dce1, #8f959d);
+  border: 1px solid #000;
+  cursor: pointer;
+}
+
+.strip-value {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.strip-name {
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.strip-name.master {
+  color: var(--accent);
+}
+
+.master-strip {
+  flex: 0 0 62px;
+  margin-left: 4px;
+  border-color: rgba(245, 166, 35, 0.4);
+  background: linear-gradient(180deg, #34373c, #232529);
+}
+
+.master-tag {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+}

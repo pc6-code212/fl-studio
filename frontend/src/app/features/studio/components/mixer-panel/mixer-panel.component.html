@@ -1,0 +1,45 @@
+<div class="mixer panel">
+  <div class="panel-header">
+    <h2>Mixer</h2>
+    <span class="hint">master bus</span>
+  </div>
+  <div class="mixer-strips">
+    @for (ch of channels(); track ch.id; let i = $index) {
+      <div class="strip" [class.muted]="ch.muted">
+        <div class="pan-knob">
+          <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.pan) + 'deg)'"></div>
+        </div>
+        <div class="strip-meter">
+          <div class="meter-fill" [style.height.%]="meterLevel(i)"></div>
+        </div>
+        <input
+          class="fader"
+          type="range"
+          min="0"
+          max="100"
+          [ngModel]="ch.volume"
+          (ngModelChange)="volumeChange.emit({ id: ch.id, volume: $event })">
+        <div class="strip-value">{{ ch.volume }}</div>
+        <button class="mini-btn mute" [class.on]="ch.muted" (click)="toggleMute.emit(ch.id)">M</button>
+        <button class="mini-btn solo" [class.on]="ch.solo" (click)="toggleSolo.emit(ch.id)">S</button>
+        <div class="strip-name" [style.color]="ch.color">{{ ch.name }}</div>
+      </div>
+    }
+
+    <div class="strip master-strip">
+      <div class="master-tag">MASTER</div>
+      <div class="strip-meter">
+        <div class="meter-fill" [style.height.%]="isPlaying() ? 74 : 0"></div>
+      </div>
+      <input
+        class="fader"
+        type="range"
+        min="0"
+        max="100"
+        [ngModel]="masterVolume()"
+        (ngModelChange)="masterVolumeChange.emit($event)">
+      <div class="strip-value">{{ masterVolume() }}</div>
+      <div class="strip-name master">Master</div>
+    </div>
+  </div>
+</div>

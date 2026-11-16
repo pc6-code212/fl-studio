@@ -1,0 +1,112 @@
+<div class="browser panel">
+  <div class="panel-header">
+    <h2>Browser</h2>
+    <span class="hint">{{ loading() ? 'scanning...' : 'library' }}</span>
+  </div>
+
+  <div class="browser-tabs">
+    <button [class.active]="tab() === 'packs'" (click)="tabChange.emit('packs')">Packs</button>
+    <button [class.active]="tab() === 'files'" (click)="tabChange.emit('files')">Files</button>
+    <button [class.active]="tab() === 'plugins'" (click)="tabChange.emit('plugins')">Plugins</button>
+    <button class="refresh-btn" title="Reload library" (click)="reload.emit()">&#8635;</button>
+  </div>
+
+  @if (error()) {
+    <div class="browser-error">{{ error() }}</div>
+  }
+
+  @if (tab() === 'packs') {
+    <div class="browser-list">
+      @for (section of sections(); track section.title) {
+        <div class="browser-section">
+          <div class="browser-section-title">&#9662; {{ section.title }}</div>
+          <ul>
+            @for (item of section.items; track item) {
+              <li><span class="folder-icon">&#9656;</span>{{ item }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  }
+
+  @if (tab() === 'files') {
+    <div class="browser-list">
+      <div class="browser-section">
+        <div class="browser-section-title">
+          <span>&#9662; Samples</span>
+          <button class="open-btn" (click)="openFolder.emit('samples')">Open</button>
+        </div>
+        <ul class="tree">
+          @for (item of flatten(folderNodes('samples')); track item.node.path) {
+            <li
+              [class.file]="item.node.type === 'file'"
+              [style.padding-left.px]="6 + item.depth * 14"
+              [title]="item.node.path"
+              (click)="onNodeClick(item.node)">
+              <span class="folder-icon">{{ item.node.type === 'folder' ? '&#9656;' : '&#9834;' }}</span>
+              <span class="node-name">{{ item.node.name }}</span>
+              <span class="node-size">{{ item.node.type === 'file' ? format(item.node.size) : '' }}</span>
+            </li>
+          }
+          @if (!folderNodes('samples').length) {
+            <li class="empty">(empty) - drop samples in backend/samples</li>
+          }
+        </ul>
+      </div>
+      @if (library()) {
+        <div class="library-path">root: {{ library()!.root }}</div>
+      }
+    </div>
+  }
+
+  @if (tab() === 'plugins') {
+    <div class="browser-list">
+      <div class="browser-section">
+        <div class="browser-section-title">
+          <span>&#9662; Instrument plugins</span>
+          <button class="open-btn" (click)="openFolder.emit('instruments')">Open</button>
+        </div>
+        <ul class="tree">
+          @for (item of flatten(folderNodes('instruments')); track item.node.path) {
+            <li
+              [class.file]="item.node.type === 'file'"
+              [style.padding-left.px]="6 + item.depth * 14"
+              [title]="item.node.path">
+              <span class="folder-icon">{{ item.node.type === 'folder' ? '&#9656;' : '&#9881;' }}</span>
+              <span class="node-name">{{ item.node.name }}</span>
+            </li>
+          }
+          @if (!folderNodes('instruments').length) {
+            <li class="empty">(empty) - drop VST .dll files here</li>
+          }
+        </ul>
+      </div>
+
+      <div class="browser-section">
+        <div class="browser-section-title">
+          <span>&#9662; Effect plugins</span>
+          <button class="open-btn" (click)="openFolder.emit('effects')">Open</button>
+        </div>
+        <ul class="tree">
+          @for (item of flatten(folderNodes('effects')); track item.node.path) {
+            <li
+              [class.file]="item.node.type === 'file'"
+              [style.padding-left.px]="6 + item.depth * 14"
+              [title]="item.node.path">
+              <span class="folder-icon">{{ item.node.type === 'folder' ? '&#9656;' : '&#9881;' }}</span>
+              <span class="node-name">{{ item.node.name }}</span>
+            </li>
+          }
+          @if (!folderNodes('effects').length) {
+            <li class="empty">(empty) - drop VST .dll files here</li>
+          }
+        </ul>
+      </div>
+
+      @if (openMessage()) {
+        <div class="library-path">{{ openMessage() }}</div>
+      }
+    </div>
+  }
+</div>

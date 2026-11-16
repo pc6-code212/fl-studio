@@ -1,0 +1,51 @@
+<section class="toolbar">
+  <div class="transport">
+    <button class="tbtn" title="Rewind" (click)="stopPressed.emit()">&#9198;</button>
+    <button class="tbtn stop" title="Stop" (click)="stopPressed.emit()">&#9632;</button>
+    <button class="tbtn play" [class.on]="isPlaying()" title="Play / Pause (Space)" (click)="playToggle.emit()">&#9654;</button>
+    <button class="tbtn rec" [class.on]="isRecording()" title="Record" (click)="recordToggle.emit()">&#9679;</button>
+  </div>
+
+  <div class="mode-switch">
+    <button [class.active]="!songMode()" (click)="songModeChange.emit(false)">PAT</button>
+    <button [class.active]="songMode()" (click)="songModeChange.emit(true)">SONG</button>
+  </div>
+
+  <div class="pattern-select">
+    <button class="tbtn sm" (click)="prevPattern.emit()">&#8249;</button>
+    <div class="pattern-display">
+      <span class="pattern-num">Pattern {{ patternNumber() }}</span>
+      <span class="pattern-name">{{ patternName() }}</span>
+    </div>
+    <button class="tbtn sm" (click)="nextPattern.emit()">&#8250;</button>
+  </div>
+
+  <div class="tempo">
+    <label>BPM</label>
+    <input
+      type="number"
+      min="20"
+      max="300"
+      [ngModel]="bpm()"
+      (ngModelChange)="bpmChange.emit($event)">
+  </div>
+
+  <div class="swing">
+    <label>Swing</label>
+    <input
+      type="range"
+      min="0"
+      max="100"
+      [ngModel]="swing()"
+      (ngModelChange)="swingChange.emit($event)">
+    <span class="val">{{ swing() }}%</span>
+  </div>
+
+  <div class="master">
+    <label>Master</label>
+    <div class="meter horizontal">
+      <div class="meter-fill" [style.width.%]="isPlaying() ? 74 : 0"></div>
+    </div>
+    <span class="val">{{ masterVolume() }}</span>
+  </div>
+</section>

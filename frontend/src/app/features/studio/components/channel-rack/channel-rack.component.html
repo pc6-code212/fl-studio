@@ -1,0 +1,51 @@
+<div class="channel-rack panel">
+  <div class="panel-header">
+    <h2>Channel Rack</h2>
+    <span class="hint">{{ channels().length }} channels &middot; 16 steps</span>
+  </div>
+
+  <div class="rack-ruler">
+    <span class="cell"></span><span class="cell"></span><span class="cell"></span>
+    <span class="cell"></span><span class="cell"></span>
+    @for (s of steps(); track s) {
+      <span class="step-num" [class.beat]="s % 4 === 0">{{ s + 1 }}</span>
+    }
+  </div>
+
+  <div class="rack-body">
+    @for (ch of channels(); track ch.id; let i = $index) {
+      <div
+        class="rack-row"
+        [class.selected]="i === selected()"
+        [class.muted]="ch.muted"
+        (click)="select.emit(i)">
+
+        <button class="ch-name" [style.border-left-color]="ch.color" (click)="preview.emit(ch)">
+          <span class="led" [style.background]="ch.color"></span>
+          <span class="ch-label">{{ ch.name }}</span>
+        </button>
+
+        <button class="mini-btn mute" [class.on]="ch.muted" title="Mute" (click)="toggleMute.emit(ch.id); $event.stopPropagation()">M</button>
+        <button class="mini-btn solo" [class.on]="ch.solo" title="Solo" (click)="toggleSolo.emit(ch.id); $event.stopPropagation()">S</button>
+
+        <div class="knob vol" [title]="'Volume ' + ch.volume">
+          <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.volume) + 'deg)'"></div>
+        </div>
+        <div class="knob pan" [title]="'Pan ' + ch.pan">
+          <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.pan) + 'deg)'"></div>
+        </div>
+
+        @for (s of steps(); track s) {
+          <button
+            class="step"
+            [class.beat]="s % 4 === 0"
+            [class.active]="ch.steps[s]"
+            [class.playing]="isPlaying() && s === currentStep()"
+            [style.--ch-color]="ch.color"
+            (click)="toggleStep.emit({ id: ch.id, step: s })">
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,23 @@
+<div class="piano-roll panel">
+  <div class="panel-header">
+    <h2>Piano Roll &mdash; {{ channelName() }}</h2>
+    <span class="hint">click to place notes</span>
+  </div>
+  <div class="piano-body">
+    @for (row of rows(); track row.label; let rowIndex = $index) {
+      <div class="piano-row">
+        <div class="key" [class.black]="row.black">{{ row.label }}</div>
+        @for (s of steps(); track s) {
+          <button
+            class="note-cell"
+            [class.black]="row.black"
+            [class.beat]="s % 4 === 0"
+            [class.on]="row.notes[s]"
+            [class.playing]="isPlaying() && s === currentStep()"
+            (click)="toggleNote.emit({ row: rowIndex, step: s })">
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

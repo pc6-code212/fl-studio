@@ -1,0 +1,21 @@
+.statusbar {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 12px;
+  background: linear-gradient(180deg, #2a2d31, #1c1e21);
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-dim);
+  flex: 0 0 auto;
+}
+
+.status-item b {
+  color: var(--accent);
+}
+
+.status-right {
+  margin-left: auto;
+  letter-spacing: 0.3px;
+}

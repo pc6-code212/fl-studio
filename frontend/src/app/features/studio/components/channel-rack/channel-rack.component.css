@@ -1,0 +1,135 @@
+.channel-rack {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  max-height: 58%;
+  overflow: hidden;
+}
+
+.rack-ruler,
+.rack-row {
+  display: grid;
+  grid-template-columns: 126px 26px 26px 32px 32px repeat(16, minmax(0, 1fr));
+  gap: 4px;
+  align-items: center;
+  padding: 3px 8px;
+}
+
+.rack-ruler {
+  padding-top: 5px;
+  padding-bottom: 2px;
+  border-bottom: 1px solid var(--line);
+}
+
+.step-num {
+  text-align: center;
+  font-size: 9px;
+  color: #6e737a;
+}
+
+.step-num.beat {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.rack-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.rack-row {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.rack-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.rack-row.selected {
+  background: linear-gradient(90deg, rgba(245, 166, 35, 0.13), rgba(245, 166, 35, 0.02));
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.rack-row.muted {
+  opacity: 0.45;
+}
+
+.ch-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 7px;
+  border-radius: 3px;
+  border: 1px solid #0e0f11;
+  border-left: 4px solid var(--accent);
+  background: linear-gradient(180deg, #3a3e44, #2a2d31);
+  color: #e2e4e7;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ch-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.knob {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a4e55, #1c1e21 70%);
+  border: 1px solid #0c0d0e;
+  position: relative;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.6);
+}
+
+.step {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 26px;
+  border-radius: 3px;
+  border: 1px solid #0d0e10;
+  background: linear-gradient(180deg, #34383e, #26282c);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.08s, box-shadow 0.08s;
+}
+
+.step.beat {
+  background: linear-gradient(180deg, #3b3f46, #2b2e33);
+  border-color: #4a4e55;
+}
+
+.step:hover {
+  filter: brightness(1.3);
+}
+
+.step.active {
+  background: linear-gradient(180deg, var(--ch-color), color-mix(in srgb, var(--ch-color) 60%, #000));
+  border-color: #0a0b0c;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--ch-color) 70%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.step.playing {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: -2px;
+}

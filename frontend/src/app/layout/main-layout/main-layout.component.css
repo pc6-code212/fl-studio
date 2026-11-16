@@ -1,0 +1,16 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.outlet {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  background:
+    radial-gradient(1200px 500px at 70% -200px, #2b2d31 0%, transparent 60%),
+    var(--bg);
+}

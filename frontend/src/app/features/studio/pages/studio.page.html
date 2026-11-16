@@ -1,0 +1,70 @@
+<app-toolbar
+  [bpm]="store.bpm()"
+  [swing]="store.swing()"
+  [masterVolume]="store.masterVolume()"
+  [isPlaying]="store.isPlaying()"
+  [isRecording]="store.isRecording()"
+  [songMode]="store.songMode()"
+  [patternNumber]="store.patternNumber()"
+  [patternName]="store.patternName()"
+  (playToggle)="store.togglePlay()"
+  (stopPressed)="store.stop()"
+  (recordToggle)="store.toggleRecord()"
+  (songModeChange)="store.setSongMode($event)"
+  (bpmChange)="store.setBpm($event)"
+  (swingChange)="store.setSwing($event)"
+  (prevPattern)="store.prevPattern()"
+  (nextPattern)="store.nextPattern()" />
+
+<main class="workspace">
+  <app-browser-panel
+    [tab]="store.activeBrowserTab()"
+    [sections]="store.browserSections"
+    [library]="store.library()"
+    [loading]="store.libraryLoading()"
+    [error]="store.libraryError()"
+    [openMessage]="store.openMessage()"
+    (tabChange)="store.setBrowserTab($event)"
+    (reload)="store.loadLibrary()"
+    (openFolder)="store.openFolder($any($event))"
+    (previewFile)="store.previewFile($event)" />
+
+  <section class="center">
+    <app-channel-rack
+      [channels]="store.channels()"
+      [steps]="store.steps"
+      [selected]="store.selectedChannel()"
+      [currentStep]="store.currentStep()"
+      [isPlaying]="store.isPlaying()"
+      (select)="store.selectChannel($event)"
+      (toggleStep)="store.toggleStep($event.id, $event.step)"
+      (toggleMute)="store.toggleMute($event)"
+      (toggleSolo)="store.toggleSolo($event)"
+      (preview)="store.previewChannel($event)" />
+
+    <app-piano-roll
+      [rows]="store.pianoRows()"
+      [steps]="store.steps"
+      [currentStep]="store.currentStep()"
+      [isPlaying]="store.isPlaying()"
+      [channelName]="store.selected().name"
+      (toggleNote)="store.toggleNote($event.row, $event.step)" />
+  </section>
+
+  <app-mixer-panel
+    [channels]="store.channels()"
+    [masterVolume]="store.masterVolume()"
+    [isPlaying]="store.isPlaying()"
+    [currentStep]="store.currentStep()"
+    (volumeChange)="store.setChannelVolume($event.id, $event.volume)"
+    (masterVolumeChange)="store.setMasterVolume($event)"
+    (toggleMute)="store.toggleMute($event)"
+    (toggleSolo)="store.toggleSolo($event)" />
+</main>
+
+<app-status-bar
+  [patternNumber]="store.patternNumber()"
+  [patternName]="store.patternName()"
+  [selectedName]="store.selected().name"
+  [bpm]="store.bpm()"
+  [swing]="store.swing()" />

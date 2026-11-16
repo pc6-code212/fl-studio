@@ -1,0 +1,16 @@
+export function formatSize(size?: number): string {
+  if (!size) {
+    return '';
+  }
+  if (size < 1024) {
+    return size + ' B';
+  }
+  if (size < 1024 * 1024) {
+    return Math.round(size / 1024) + ' KB';
+  }
+  return (size / 1024 / 1024).toFixed(1) + ' MB';
+}
+
+export function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
