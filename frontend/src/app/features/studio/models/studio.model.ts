@@ -3,6 +3,7 @@ export interface Channel {
   name: string;
   color: string;
   steps: boolean[];
+  notes: PianoRow[];
   volume: number;
   pan: number;
   mixerChannel: number;
@@ -20,7 +21,6 @@ export interface Pattern {
   id: number;
   name: string;
   channels: Channel[];
-  pianoRows: PianoRow[];
 }
 
 export interface PlaylistTrack {

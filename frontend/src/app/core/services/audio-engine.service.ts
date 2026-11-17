@@ -51,6 +51,33 @@ export class AudioEngineService implements OnDestroy {
     }
   }
 
+  playChannelNote(name: VoiceName, volume: number, label: string): void {
+    const ctx = this.ensureAudio();
+    const t = ctx.currentTime + 0.005;
+    const vol = Math.pow(volume / 100, 1.4);
+    const voice = name.toLowerCase();
+    const freq = noteToFrequency(label);
+    const ratio = freq / noteToFrequency('C5');
+
+    if (voice.includes('kick')) {
+      this.playKick(ctx, t, vol, ratio);
+    } else if (voice.includes('clap')) {
+      this.playNoiseHit(ctx, t, vol, 1100 * ratio, 'bandpass', 0.16, 0.6);
+    } else if (voice.includes('snare')) {
+      this.playNoiseHit(ctx, t, vol, 1700 * ratio, 'highpass', 0.19, 0.55);
+    } else if (voice.includes('hat')) {
+      this.playNoiseHit(ctx, t, vol * 0.8, 8000 * ratio, 'highpass', 0.055, 0.4);
+    } else if (voice.includes('bass') || voice.includes('808')) {
+      this.playBass(ctx, t, vol, freq);
+    } else if (voice.includes('pad')) {
+      this.playPad(ctx, t, vol * 0.65, [freq, freq * 1.2599, freq * 1.4983]);
+    } else if (voice.includes('fx')) {
+      this.playRiser(ctx, t, vol * 0.7, ratio);
+    } else {
+      this.playLead(ctx, t, vol, freq);
+    }
+  }
+
   playPianoNote(label: string): void {
     const ctx = this.ensureAudio();
     const t = ctx.currentTime + 0.005;
@@ -114,12 +141,12 @@ export class AudioEngineService implements OnDestroy {
     return this.noiseBuffer;
   }
 
-  private playKick(ctx: AudioContext, t: number, vol: number): void {
+  private playKick(ctx: AudioContext, t: number, vol: number, ratio = 1): void {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(155, t);
-    osc.frequency.exponentialRampToValueAtTime(42, t + 0.12);
+    osc.frequency.setValueAtTime(155 * ratio, t);
+    osc.frequency.exponentialRampToValueAtTime(42 * ratio, t + 0.12);
     gain.gain.setValueAtTime(0.0001, t);
     gain.gain.linearRampToValueAtTime(vol * 1.1, t + 0.005);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.38);
@@ -221,15 +248,15 @@ export class AudioEngineService implements OnDestroy {
     });
   }
 
-  private playRiser(ctx: AudioContext, t: number, vol: number): void {
+  private playRiser(ctx: AudioContext, t: number, vol: number, ratio = 1): void {
     const src = ctx.createBufferSource();
     src.buffer = this.getNoise(ctx);
     src.loop = true;
     const filter = ctx.createBiquadFilter();
     filter.type = 'bandpass';
     filter.Q.value = 2;
-    filter.frequency.setValueAtTime(400, t);
-    filter.frequency.exponentialRampToValueAtTime(7000, t + 0.9);
+    filter.frequency.setValueAtTime(400 * ratio, t);
+    filter.frequency.exponentialRampToValueAtTime(7000 * ratio, t + 0.9);
     const gain = ctx.createGain();
     gain.gain.setValueAtTime(0.0001, t);
     gain.gain.linearRampToValueAtTime(vol * 0.28, t + 0.5);

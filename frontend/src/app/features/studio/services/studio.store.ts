@@ -62,7 +62,9 @@ export class StudioStore implements OnDestroy {
   readonly patterns = signal<Pattern[]>(this.createPatterns());
   readonly activePattern = computed(() => this.patterns()[this.patternNumber() - 1]);
   readonly channels = computed(() => this.activePattern()?.channels ?? []);
-  readonly pianoRows = computed(() => this.activePattern()?.pianoRows ?? []);
+  readonly pianoRows = computed(
+    () => this.channels()[this.selectedChannel()]?.notes ?? []
+  );
   readonly patternList = computed(() =>
     this.patterns().map((pattern, index) => ({ number: index + 1, name: pattern.name }))
   );
@@ -329,8 +331,7 @@ export class StudioStore implements OnDestroy {
     const pattern: Pattern = {
       id: this.nextPatternId++,
       name: `Pattern ${this.patterns().length + 1}`,
-      channels: this.createChannels(true),
-      pianoRows: this.createPianoRows(false)
+      channels: this.createChannels(true)
     };
     this.patterns.update(list => [...list, pattern]);
     this.patternNumber.set(this.patterns().length);
@@ -341,32 +342,38 @@ export class StudioStore implements OnDestroy {
     if (!channel) {
       return;
     }
-    const steps = channel.steps.slice();
-    steps[step] = !steps[step];
-    this.updateChannel(id, { steps });
-    if (steps[step]) {
-      this.engine.playVoice(channel.name, channel.volume, step);
+    const notes = channel.notes.map(row => ({ ...row, notes: row.notes.slice() }));
+    const active = notes.some(row => row.notes[step]);
+    if (active) {
+      notes.forEach(row => (row.notes[step] = false));
+    } else {
+      const c5 = notes.find(row => row.label === 'C5');
+      if (c5) {
+        c5.notes[step] = true;
+      }
+    }
+    this.updateChannel(id, { notes, steps: this.syncSteps(notes) });
+    if (!active) {
+      this.playChannelNote(channel, 'C5');
     }
   }
 
   toggleNote(rowIndex: number, step: number): void {
-    const pattern = this.activePattern();
-    if (!pattern) {
+    const channel = this.selected();
+    if (!channel) {
       return;
     }
-    const rows = pattern.pianoRows.map((row, index) => {
+    const notes = channel.notes.map((row, index) => {
       if (index !== rowIndex) {
         return row;
       }
-      const notes = row.notes.slice();
-      notes[step] = !notes[step];
-      return { ...row, notes };
+      const cells = row.notes.slice();
+      cells[step] = !cells[step];
+      return { ...row, notes: cells };
     });
-    this.patterns.update(list =>
-      list.map(item => (item.id === pattern.id ? { ...item, pianoRows: rows } : item))
-    );
-    if (rows[rowIndex] && rows[rowIndex].notes[step]) {
-      this.engine.playPianoNote(rows[rowIndex].label);
+    this.updateChannel(channel.id, { notes, steps: this.syncSteps(notes) });
+    if (notes[rowIndex] && notes[rowIndex].notes[step]) {
+      this.playChannelNote(channel, notes[rowIndex].label);
     }
   }
 
@@ -443,7 +450,7 @@ export class StudioStore implements OnDestroy {
   }
 
   previewChannel(channel: Channel): void {
-    this.engine.playVoice(channel.name, channel.volume, 0);
+    this.playChannelNote(channel, 'C5');
   }
 
   loadLibrary(): void {
@@ -510,22 +517,20 @@ export class StudioStore implements OnDestroy {
     return this.patternNames.map((name, index) => ({
       id: index,
       name,
-      channels: this.createChannels(),
-      pianoRows: this.createPianoRows()
+      channels: this.createChannels()
     }));
   }
 
   private createChannels(empty = false): Channel[] {
     const make = (id: number, name: string, color: string, on: number[] = []): Channel => {
-      const steps = Array.from({ length: 16 }, () => false);
-      if (!empty) {
-        on.forEach(step => (steps[step] = true));
-      }
+      const active = empty ? [] : on;
+      const notes = this.createChannelNotes(active);
       return {
         id,
         name,
         color,
-        steps,
+        steps: this.syncSteps(notes),
+        notes,
         volume: 78,
         pan: 50,
         mixerChannel: id + 1,
@@ -546,7 +551,7 @@ export class StudioStore implements OnDestroy {
     ];
   }
 
-  private createPianoRows(withMelody = true): PianoRow[] {
+  private createPianoRows(): PianoRow[] {
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const labels: string[] = [];
     for (let octave = 0; octave <= 10; octave++) {
@@ -555,7 +560,7 @@ export class StudioStore implements OnDestroy {
       }
     }
 
-    const rows: PianoRow[] = labels
+    return labels
       .slice()
       .reverse()
       .map(label => ({
@@ -563,27 +568,25 @@ export class StudioStore implements OnDestroy {
         black: label.includes('#'),
         notes: Array.from({ length: 16 }, () => false)
       }));
+  }
 
-    const rowIndex = new Map(rows.map((row, index) => [row.label, index]));
-    const melody: Array<[string, number[]]> = [
-      ['C5', [0, 4, 8, 12]],
-      ['D#5', [2, 6, 10, 14]],
-      ['G5', [0, 6, 8]],
-      ['C6', [0, 4, 8, 12]],
-      ['A#5', [2, 10]],
-      ['F5', [6, 14]]
-    ];
-    if (withMelody) {
-      melody.forEach(([label, cols]) => {
-        const index = rowIndex.get(label);
-        if (index === undefined) {
-          return;
-        }
-        cols.forEach(col => (rows[index].notes[col] = true));
-      });
+  private createChannelNotes(activeSteps: number[]): PianoRow[] {
+    const rows = this.createPianoRows();
+    const c5 = rows.find(row => row.label === 'C5');
+    if (c5) {
+      activeSteps.forEach(step => (c5.notes[step] = true));
     }
-
     return rows;
+  }
+
+  private syncSteps(notes: PianoRow[]): boolean[] {
+    return Array.from({ length: this.stepCount }, (_, step) =>
+      notes.some(row => row.notes[step])
+    );
+  }
+
+  private playChannelNote(channel: Channel, label: string): void {
+    this.engine.playChannelNote(channel.name, channel.volume, label);
   }
 
   private createPlaylistTracks(): PlaylistTrack[] {
@@ -664,13 +667,13 @@ export class StudioStore implements OnDestroy {
   private triggerStep(step: number): void {
     const anySolo = this.channels().some(channel => channel.solo);
     for (const channel of this.channels()) {
-      if (channel.steps[step] && !channel.muted && (!anySolo || channel.solo)) {
-        this.engine.playVoice(channel.name, channel.volume, step);
+      if (channel.muted || (anySolo && !channel.solo)) {
+        continue;
       }
-    }
-    for (const row of this.pianoRows()) {
-      if (row.notes[step]) {
-        this.engine.playPianoNote(row.label);
+      for (const row of channel.notes) {
+        if (row.notes[step]) {
+          this.playChannelNote(channel, row.label);
+        }
       }
     }
   }
