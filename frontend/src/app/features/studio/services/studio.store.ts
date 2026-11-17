@@ -32,7 +32,7 @@ export class StudioStore implements OnDestroy {
   readonly stepCount = 16;
   readonly steps = Array.from({ length: this.stepCount }, (_, i) => i);
   readonly stepsPerBar = 16;
-  readonly playlistBars = signal(8);
+  readonly playlistBars = signal(64);
   readonly playlistTotalSteps = computed(() => this.playlistBars() * this.stepsPerBar);
   readonly playlistPalette = [
     '#e2574c', '#e08a3c', '#d8c049', '#8bbf4a', '#42a5a0', '#4a7fd0',

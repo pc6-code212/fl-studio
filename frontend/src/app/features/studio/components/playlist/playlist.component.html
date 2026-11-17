@@ -37,17 +37,12 @@
             <button class="mini-btn solo" [class.on]="track.solo" title="Solo" (click)="toggleSolo.emit(track.id)">S</button>
           </div>
 
-          <div class="track-lane" [style.width.px]="laneWidth()">
-            @for (s of allSteps(); track s) {
-              <button
-                class="lane-cell"
-                [class.bar]="s % stepsPerBar() === 0"
-                [class.beat]="s % 4 === 0"
-                [style.width.px]="cellWidth"
-                (click)="toggleClip.emit({ track: track.id, start: s, active: true })"
-                (contextmenu)="toggleClip.emit({ track: track.id, start: s, active: false }); $event.preventDefault()"></button>
-            }
-
+          <div
+            class="track-lane"
+            [style.width.px]="laneWidth()"
+            [style.--cell-w.px]="cellWidth"
+            (click)="onLaneClick($event, track.id, true)"
+            (contextmenu)="onLaneClick($event, track.id, false); $event.preventDefault()">
             @for (clip of clipsFor(track.id); track clip.id) {
               <button
                 class="clip"

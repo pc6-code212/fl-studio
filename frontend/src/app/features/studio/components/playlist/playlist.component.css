@@ -192,29 +192,23 @@
   display: flex;
   flex: 0 0 auto;
   height: 100%;
-  background: #1b1d21;
-}
-
-.lane-cell {
-  flex: 0 0 auto;
-  height: 100%;
-  padding: 0;
-  border: none;
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
-  background: transparent;
   cursor: pointer;
+  background-color: #1b1d21;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(245, 166, 35, 0.32) 0 1px,
+      transparent 1px calc(var(--cell-w, 18px) * 16)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.07) 0 1px,
+      transparent 1px calc(var(--cell-w, 18px) * 4)
+    );
 }
 
-.lane-cell.beat {
-  border-right-color: rgba(255, 255, 255, 0.07);
-}
-
-.lane-cell.bar {
-  border-left: 1px solid rgba(245, 166, 35, 0.28);
-}
-
-.lane-cell:hover {
-  background: rgba(245, 166, 35, 0.12);
+.track-lane:hover {
+  background-color: #1f2126;
 }
 
 .clip {

@@ -51,10 +51,19 @@ export class PlaylistComponent {
   @ViewChild('hscroll') private hscrollRef?: ElementRef<HTMLElement>;
 
   readonly totalSteps = computed(() => this.bars() * this.stepsPerBar());
-  readonly allSteps = computed(() => Array.from({ length: this.totalSteps() }, (_, i) => i));
   readonly barsArray = computed(() => Array.from({ length: this.bars() }, (_, i) => i));
   readonly laneWidth = computed(() => this.totalSteps() * this.cellWidth);
   readonly contentWidth = computed(() => this.headWidth + this.laneWidth());
+
+  onLaneClick(event: MouseEvent, trackId: number, active: boolean): void {
+    const lane = event.currentTarget as HTMLElement;
+    const x = event.clientX - lane.getBoundingClientRect().left;
+    const step = Math.max(
+      0,
+      Math.min(this.totalSteps() - 1, Math.floor(x / this.cellWidth))
+    );
+    this.toggleClip.emit({ track: trackId, start: step, active });
+  }
 
   onScroll(event: Event): void {
     const el = event.target as HTMLElement;
