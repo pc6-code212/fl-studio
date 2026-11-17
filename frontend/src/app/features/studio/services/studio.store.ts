@@ -147,10 +147,11 @@ export class StudioStore implements OnDestroy {
       return;
     }
     this.isPlaying.set(true);
-    this.absoluteStep = 0;
+    this.absoluteStep = -1;
     this.currentStep.set(-1);
     this.playlistStep.set(-1);
     this.startClock();
+    this.advanceStep();
   }
 
   stop(): void {
@@ -158,7 +159,7 @@ export class StudioStore implements OnDestroy {
     this.isRecording.set(false);
     this.currentStep.set(-1);
     this.playlistStep.set(-1);
-    this.absoluteStep = 0;
+    this.absoluteStep = -1;
     this.stopClock();
   }
 
@@ -648,13 +649,15 @@ export class StudioStore implements OnDestroy {
   private startClock(): void {
     this.stopClock();
     const stepMs = 60000 / this.bpm() / 4;
-    this.clock = setInterval(() => {
-      this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps;
-      this.playlistStep.set(this.absoluteStep);
-      const next = this.absoluteStep % this.stepCount;
-      this.currentStep.set(next);
-      this.triggerStep(next);
-    }, stepMs);
+    this.clock = setInterval(() => this.advanceStep(), stepMs);
+  }
+
+  private advanceStep(): void {
+    this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps;
+    this.playlistStep.set(this.absoluteStep);
+    const next = this.absoluteStep % this.stepCount;
+    this.currentStep.set(next);
+    this.triggerStep(next);
   }
 
   private stopClock(): void {
