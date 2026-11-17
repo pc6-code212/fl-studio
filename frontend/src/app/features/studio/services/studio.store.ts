@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
 import { AudioEngineService } from '@core/services/audio-engine.service';
 import { LibraryApiService, LibraryFolder } from '@core/services/library-api.service';
 import { clamp } from '@shared/utils/format';
@@ -144,14 +144,97 @@ export class StudioStore implements OnDestroy {
 
   private clock: ReturnType<typeof setInterval> | null = null;
   private previewAudio: HTMLAudioElement | null = null;
+  private lastSnapshot: string | null = null;
+  private isRestoring = false;
+  private readonly undoStack = signal<string[]>([]);
+  private readonly redoStack = signal<string[]>([]);
   private absoluteStep = 0;
   private nextClipId = 1000;
   private nextPatternId = 100;
   private readonly heldKeys = new Set<string>();
 
+  constructor() {
+    effect(() => {
+      const snapshot = this.serializeHistoryState();
+      if (this.lastSnapshot === null) {
+        this.lastSnapshot = snapshot;
+        return;
+      }
+      if (this.isRestoring) {
+        this.lastSnapshot = snapshot;
+        return;
+      }
+      if (snapshot !== this.lastSnapshot) {
+        this.undoStack.update(stack => [...stack, this.lastSnapshot!]);
+        this.redoStack.set([]);
+        this.lastSnapshot = snapshot;
+      }
+    });
+  }
+
   ngOnDestroy(): void {
     this.stopClock();
     this.stopPreview();
+  }
+
+  readonly canUndo = computed(() => this.undoStack().length > 0);
+  readonly canRedo = computed(() => this.redoStack().length > 0);
+
+  undo(): void {
+    if (this.undoStack().length === 0) {
+      return;
+    }
+    const current = this.serializeHistoryState();
+    const previous = this.undoStack()[this.undoStack().length - 1];
+    this.undoStack.update(stack => stack.slice(0, -1));
+    this.redoStack.update(stack => [...stack, current]);
+    this.isRestoring = true;
+    this.restoreHistoryState(JSON.parse(previous));
+    this.isRestoring = false;
+    this.lastSnapshot = this.serializeHistoryState();
+  }
+
+  redo(): void {
+    if (this.redoStack().length === 0) {
+      return;
+    }
+    const current = this.serializeHistoryState();
+    const next = this.redoStack()[this.redoStack().length - 1];
+    this.redoStack.update(stack => stack.slice(0, -1));
+    this.undoStack.update(stack => [...stack, current]);
+    this.isRestoring = true;
+    this.restoreHistoryState(JSON.parse(next));
+    this.isRestoring = false;
+    this.lastSnapshot = this.serializeHistoryState();
+  }
+
+  private serializeHistoryState(): string {
+    return JSON.stringify({
+      bpm: this.bpm(),
+      swing: this.swing(),
+      masterVolume: this.masterVolume(),
+      selectedChannel: this.selectedChannel(),
+      patternNumber: this.patternNumber(),
+      keyboardPiano: this.keyboardPiano(),
+      playlistBars: this.playlistBars(),
+      patterns: this.patterns(),
+      playlistTracks: this.playlistTracks(),
+      playlistClips: this.playlistClips()
+    });
+  }
+
+  private restoreHistoryState(state: any): void {
+    this.bpm.set(state.bpm);
+    this.swing.set(state.swing);
+    this.masterVolume.set(state.masterVolume);
+    this.engine.setMasterVolume(state.masterVolume);
+    this.selectedChannel.set(state.selectedChannel);
+    this.patternNumber.set(state.patternNumber);
+    this.keyboardPiano.set(state.keyboardPiano);
+    this.playlistBars.set(state.playlistBars);
+    this.patterns.set(state.patterns);
+    this.playlistTracks.set(state.playlistTracks);
+    this.playlistClips.set(state.playlistClips);
   }
 
   togglePlay(): void {

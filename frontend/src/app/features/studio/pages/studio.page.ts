@@ -165,6 +165,24 @@ export class StudioPage implements OnInit {
   @HostListener('window:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement | null;
+
+    if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+      const key = event.key.toLowerCase();
+      if (key === 'z') {
+        event.preventDefault();
+        if (event.shiftKey) {
+          this.store.redo();
+        } else {
+          this.store.undo();
+        }
+        return;
+      }
+      if (key === 'y') {
+        event.preventDefault();
+        this.store.redo();
+        return;
+      }
+    }
     const isFormField =
       !!target &&
       (target.tagName === 'INPUT' ||
