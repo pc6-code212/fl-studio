@@ -71,7 +71,9 @@ export class PlaylistComponent {
     if (hscroll && Math.abs(hscroll.scrollLeft - el.scrollLeft) > 1) {
       hscroll.scrollLeft = el.scrollLeft;
     }
-    this.checkInfinite(el);
+    if (el.scrollHeight > el.clientHeight + 1 && el.scrollTop + el.clientHeight >= el.scrollHeight - 48) {
+      this.extendTracks.emit();
+    }
   }
 
   onHorizontalScroll(event: Event): void {
@@ -80,17 +82,8 @@ export class PlaylistComponent {
     if (body && Math.abs(body.scrollLeft - el.scrollLeft) > 1) {
       body.scrollLeft = el.scrollLeft;
     }
-    if (body) {
-      this.checkInfinite(body);
-    }
-  }
-
-  private checkInfinite(el: HTMLElement): void {
-    if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 48) {
+    if (el.scrollWidth > el.clientWidth + 1 && el.scrollLeft + el.clientWidth >= el.scrollWidth - 48) {
       this.extendBars.emit();
-    }
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 48) {
-      this.extendTracks.emit();
     }
   }
 
