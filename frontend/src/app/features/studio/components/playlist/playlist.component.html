@@ -40,7 +40,8 @@
                 [class.bar]="s % stepsPerBar() === 0"
                 [class.beat]="s % 4 === 0"
                 [style.width.px]="cellWidth"
-                (click)="toggleClip.emit({ track: track.id, start: s })"></button>
+                (click)="toggleClip.emit({ track: track.id, start: s, active: true })"
+                (contextmenu)="toggleClip.emit({ track: track.id, start: s, active: false }); $event.preventDefault()"></button>
             }
 
             @for (clip of clipsFor(track.id); track clip.id) {
@@ -50,7 +51,8 @@
                 [style.width.px]="clip.length * cellWidth"
                 [style.--clip-color]="clip.color"
                 [title]="clip.name"
-                (click)="toggleClip.emit({ track: track.id, start: clip.start }); $event.stopPropagation()">
+                (click)="toggleClip.emit({ track: track.id, start: clip.start, active: true }); $event.stopPropagation()"
+                (contextmenu)="toggleClip.emit({ track: track.id, start: clip.start, active: false }); $event.preventDefault(); $event.stopPropagation()">
                 <span class="clip-name">{{ clip.name }}</span>
               </button>
             }

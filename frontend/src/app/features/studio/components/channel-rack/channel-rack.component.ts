@@ -5,6 +5,7 @@ import { Channel } from '@features/studio/models/studio.model';
 export interface StepToggleEvent {
   id: number;
   step: number;
+  active: boolean;
 }
 
 export interface ChannelPanEvent {

@@ -21,7 +21,8 @@
             [class.beat]="s % 4 === 0"
             [class.on]="row.notes[s]"
             [class.playing]="isPlaying() && s === currentStep()"
-            (click)="toggleNote.emit({ row: rowIndex, step: s })">
+            (click)="toggleNote.emit({ row: rowIndex, step: s, active: true })"
+            (contextmenu)="toggleNote.emit({ row: rowIndex, step: s, active: false }); $event.preventDefault()">
           </button>
         }
       </div>

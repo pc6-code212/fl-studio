@@ -4,6 +4,7 @@ import { PlaylistClip, PlaylistTrack } from '@features/studio/models/studio.mode
 export interface PlaylistCellEvent {
   track: number;
   start: number;
+  active: boolean;
 }
 
 @Component({

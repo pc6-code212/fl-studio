@@ -383,43 +383,54 @@ export class StudioStore implements OnDestroy {
     this.patternNumber.set(this.patterns().length);
   }
 
-  toggleStep(id: number, step: number): void {
+  setStep(id: number, step: number, active: boolean): void {
     const channel = this.channels().find(c => c.id === id);
     if (!channel) {
       return;
     }
     const notes = channel.notes.map(row => ({ ...row, notes: row.notes.slice() }));
-    const active = notes.some(row => row.notes[step]);
-    if (active) {
+    const hadNote = notes.some(row => row.notes[step]);
+    if (!active) {
+      if (!hadNote) {
+        return;
+      }
       notes.forEach(row => (row.notes[step] = false));
     } else {
       const c5 = notes.find(row => row.label === 'C5');
-      if (c5) {
-        c5.notes[step] = true;
+      if (!c5) {
+        return;
       }
+      c5.notes[step] = true;
     }
     this.updateChannel(id, { notes, steps: this.syncSteps(notes) });
-    if (!active) {
+    if (active) {
       this.playChannelNote(channel, 'C5');
     }
   }
 
-  toggleNote(rowIndex: number, step: number): void {
+  setNote(rowIndex: number, step: number, active: boolean): void {
     const channel = this.selected();
-    if (!channel) {
+    const row = channel?.notes[rowIndex];
+    if (!channel || !row) {
       return;
     }
-    const notes = channel.notes.map((row, index) => {
-      if (index !== rowIndex) {
-        return row;
+    if (row.notes[step] === active) {
+      if (active) {
+        this.playChannelNote(channel, row.label);
       }
-      const cells = row.notes.slice();
-      cells[step] = !cells[step];
-      return { ...row, notes: cells };
+      return;
+    }
+    const notes = channel.notes.map((item, index) => {
+      if (index !== rowIndex) {
+        return item;
+      }
+      const cells = item.notes.slice();
+      cells[step] = active;
+      return { ...item, notes: cells };
     });
     this.updateChannel(channel.id, { notes, steps: this.syncSteps(notes) });
-    if (notes[rowIndex] && notes[rowIndex].notes[step]) {
-      this.playChannelNote(channel, notes[rowIndex].label);
+    if (active) {
+      this.playChannelNote(channel, row.label);
     }
   }
 
@@ -458,13 +469,18 @@ export class StudioStore implements OnDestroy {
     this.frontPanel.set('pianoRoll');
   }
 
-  togglePlaylistClip(trackId: number, start: number): void {
+  setPlaylistClip(trackId: number, start: number, active: boolean): void {
     const barStart = Math.floor(start / this.stepsPerBar) * this.stepsPerBar;
     const existing = this.playlistClips().find(
       clip => clip.track === trackId && clip.start === barStart
     );
+    if (!active) {
+      if (existing) {
+        this.playlistClips.update(list => list.filter(clip => clip.id !== existing.id));
+      }
+      return;
+    }
     if (existing) {
-      this.playlistClips.update(list => list.filter(clip => clip.id !== existing.id));
       return;
     }
     const track = this.playlistTracks().find(item => item.id === trackId);

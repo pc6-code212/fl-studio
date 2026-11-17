@@ -12,6 +12,7 @@ import { PianoRow } from '@features/studio/models/studio.model';
 export interface NoteToggleEvent {
   row: number;
   step: number;
+  active: boolean;
 }
 
 @Component({
