@@ -5,7 +5,8 @@ import {
   ViewChild,
   computed,
   input,
-  output
+  output,
+  signal
 } from '@angular/core';
 import { PlaylistClip, PlaylistTrack } from '@features/studio/models/studio.model';
 
@@ -13,6 +14,12 @@ export interface PlaylistCellEvent {
   track: number;
   start: number;
   active: boolean;
+}
+
+export interface ClipResizeEvent {
+  id: number;
+  start: number;
+  length: number;
 }
 
 @Component({
@@ -34,6 +41,7 @@ export class PlaylistComponent {
   readonly maximized = input<boolean>(false);
 
   readonly toggleClip = output<PlaylistCellEvent>();
+  readonly resizeClip = output<ClipResizeEvent>();
   readonly toggleMute = output<number>();
   readonly toggleSolo = output<number>();
   readonly extendBars = output<void>();
@@ -45,6 +53,10 @@ export class PlaylistComponent {
 
   readonly cellWidth = 18;
   readonly headWidth = 168;
+
+  readonly snap = signal(true);
+  readonly snapDivision = signal(4);
+  readonly snapSteps = computed(() => 4 / this.snapDivision());
 
   @ViewChild('body') private bodyRef?: ElementRef<HTMLElement>;
   @ViewChild('hscroll') private hscrollRef?: ElementRef<HTMLElement>;
@@ -99,5 +111,42 @@ export class PlaylistComponent {
       return;
     }
     this.headerDrag.emit(event);
+  }
+
+  setSnapDivision(event: Event): void {
+    this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 4);
+  }
+
+  startClipResize(event: PointerEvent, clip: PlaylistClip, side: 'left' | 'right'): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const originStart = clip.start;
+    const originLength = clip.length;
+    const total = this.totalSteps();
+    const move = (moveEvent: PointerEvent) => {
+      let delta = (moveEvent.clientX - startX) / this.cellWidth;
+      if (this.snap()) {
+        const step = this.snapSteps();
+        delta = Math.round(delta / step) * step;
+      } else {
+        delta = Math.round(delta * 100) / 100;
+      }
+      let start = originStart;
+      let length = originLength;
+      if (side === 'right') {
+        length = Math.max(0.25, Math.min(total - originStart, originLength + delta));
+      } else {
+        start = Math.max(0, Math.min(originStart + originLength - 0.25, originStart + delta));
+        length = originLength + (originStart - start);
+      }
+      this.resizeClip.emit({ id: clip.id, start, length });
+    };
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
   }
 }

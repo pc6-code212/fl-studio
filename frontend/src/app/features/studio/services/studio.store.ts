@@ -419,19 +419,27 @@ export class StudioStore implements OnDestroy {
     if (!channel) {
       return;
     }
-    const notes = channel.notes.map(row => ({ ...row, notes: row.notes.slice() }));
+    const notes = channel.notes.map(row => ({
+      ...row,
+      notes: row.notes.slice(),
+      lengths: row.lengths.slice()
+    }));
     const hadNote = notes.some(row => row.notes[step]);
     if (!active) {
       if (!hadNote) {
         return;
       }
-      notes.forEach(row => (row.notes[step] = false));
+      notes.forEach(row => {
+        row.notes[step] = false;
+        row.lengths[step] = 1;
+      });
     } else {
       const c5 = notes.find(row => row.label === 'C5');
       if (!c5) {
         return;
       }
       c5.notes[step] = true;
+      c5.lengths[step] = 1;
     }
     this.updateChannel(id, { notes, steps: this.syncSteps(notes) });
     if (active) {
@@ -456,13 +464,42 @@ export class StudioStore implements OnDestroy {
         return item;
       }
       const cells = item.notes.slice();
+      const lengths = item.lengths.slice();
       cells[step] = active;
-      return { ...item, notes: cells };
+      if (active) {
+        lengths[step] = Math.max(1, lengths[step] ?? 1);
+      } else {
+        lengths[step] = 1;
+      }
+      return { ...item, notes: cells, lengths };
     });
     this.updateChannel(channel.id, { notes, steps: this.syncSteps(notes) });
     if (active) {
       this.playChannelNote(channel, row.label);
     }
+  }
+
+  resizeNote(rowIndex: number, oldStart: number, start: number, length: number): void {
+    const channel = this.selected();
+    const row = channel?.notes[rowIndex];
+    if (!channel || !row) {
+      return;
+    }
+    const newStart = clamp(Math.round(start), 0, this.stepCount - 1);
+    const newLength = clamp(Number(length) || 1, 0.25, this.stepCount - newStart);
+    const notes = channel.notes.map((item, index) => {
+      if (index !== rowIndex) {
+        return item;
+      }
+      const cells = item.notes.slice();
+      const lengths = item.lengths.slice();
+      cells[oldStart] = false;
+      lengths[oldStart] = 1;
+      cells[newStart] = true;
+      lengths[newStart] = Math.round(newLength * 100) / 100;
+      return { ...item, notes: cells, lengths };
+    });
+    this.updateChannel(channel.id, { notes, steps: this.syncSteps(notes) });
   }
 
   toggleMute(id: number): void {
@@ -542,8 +579,25 @@ export class StudioStore implements OnDestroy {
     ]);
   }
 
-  togglePlaylistMute(trackId: number): void {
-    this.playlistTracks.update(list =>
+  resizePlaylistClip(id: number, start: number, length: number): void {
+    const total = this.playlistTotalSteps();
+    this.playlistClips.update(list =>
+      list.map(clip => {
+        if (clip.id !== id) {
+          return clip;
+        }
+        const newStart = clamp(start, 0, total - 0.25);
+        const newLength = clamp(length, 0.25, total - newStart);
+        return {
+          ...clip,
+          start: Math.round(newStart * 100) / 100,
+          length: Math.round(newLength * 100) / 100
+        };
+      })
+    );
+  }
+
+  togglePlaylistMute(trackId: number): void {    this.playlistTracks.update(list =>
       list.map(track => (track.id === trackId ? { ...track, muted: !track.muted } : track))
     );
   }
@@ -671,7 +725,8 @@ export class StudioStore implements OnDestroy {
       .map(label => ({
         label,
         black: label.includes('#'),
-        notes: Array.from({ length: 16 }, () => false)
+        notes: Array.from({ length: 16 }, () => false),
+        lengths: Array.from({ length: 16 }, () => 1)
       }));
   }
 

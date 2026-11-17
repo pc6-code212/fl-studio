@@ -10,21 +10,61 @@
       </div>
     </div>
   </div>
+
+  <div class="mini-toolbar">
+    <button
+      class="tool-btn"
+      [class.on]="snap()"
+      title="Magnet: snap note edges to the grid"
+      (click)="snap.set(!snap())">MAG</button>
+    <select class="snap-select" [disabled]="!snap()" (change)="setSnapDivision($event)" title="Snap division">
+      <option value="4" [selected]="snapDivision() === 4">1/4 beat</option>
+      <option value="8" [selected]="snapDivision() === 8">1/8 beat</option>
+      <option value="16" [selected]="snapDivision() === 16">1/16 beat</option>
+    </select>
+    <span class="tool-hint">Drag note edges to resize &middot; magnet off = free</span>
+  </div>
+
   <div class="piano-body" #body>
     @for (row of rows(); track row.label; let rowIndex = $index) {
       <div class="piano-row" [attr.data-note]="row.label" [class.pressed]="isPressed(row.label)">
         <div class="key" [class.black]="row.black" [class.pressed]="isPressed(row.label)">{{ row.label }}</div>
-        @for (s of steps(); track s) {
-          <button
-            class="note-cell"
-            [class.black]="row.black"
-            [class.beat]="s % 4 === 0"
-            [class.on]="row.notes[s]"
-            [class.playing]="isPlaying() && s === currentStep()"
-            (click)="toggleNote.emit({ row: rowIndex, step: s, active: true })"
-            (contextmenu)="toggleNote.emit({ row: rowIndex, step: s, active: false }); $event.preventDefault()">
-          </button>
-        }
+        <div class="note-lane">
+          @for (s of steps(); track s) {
+            @if (isCovered(rowIndex, s)) {
+              <span class="note-spacer"></span>
+            } @else {
+              <button
+                class="note-cell"
+                [class.black]="row.black"
+                [class.beat]="s % 4 === 0"
+                [class.on]="row.notes[s]"
+                [class.playing]="isPlaying() && s === currentStep()"
+                (click)="toggleNote.emit({ row: rowIndex, step: s, active: true })"
+                (contextmenu)="toggleNote.emit({ row: rowIndex, step: s, active: false }); $event.preventDefault()"></button>
+            }
+          }
+          @for (note of notesInRow(rowIndex); track note.start) {
+            <div
+              class="note-block"
+              [style.left.%]="note.start / steps().length * 100"
+              [style.width.%]="note.length / steps().length * 100"
+              (contextmenu)="toggleNote.emit({ row: rowIndex, step: note.start, active: false }); $event.preventDefault(); $event.stopPropagation()">
+              <span
+                class="note-handle left"
+                title="Drag to resize"
+                (pointerdown)="startNoteResize($event, rowIndex, note.start, 'left')"
+                (click)="$event.stopPropagation()"
+                (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
+              <span
+                class="note-handle right"
+                title="Drag to resize"
+                (pointerdown)="startNoteResize($event, rowIndex, note.start, 'right')"
+                (click)="$event.stopPropagation()"
+                (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
+            </div>
+          }
+        </div>
       </div>
     }
   </div>

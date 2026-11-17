@@ -11,6 +11,20 @@
     </div>
   </div>
 
+  <div class="mini-toolbar">
+    <button
+      class="tool-btn"
+      [class.on]="snap()"
+      title="Magnet: snap clip edges to the grid"
+      (click)="snap.set(!snap())">MAG</button>
+    <select class="snap-select" [disabled]="!snap()" (change)="setSnapDivision($event)" title="Snap division">
+      <option value="4" [selected]="snapDivision() === 4">1/4 beat</option>
+      <option value="8" [selected]="snapDivision() === 8">1/8 beat</option>
+      <option value="16" [selected]="snapDivision() === 16">1/16 beat</option>
+    </select>
+    <span class="tool-hint">Drag clip edges to resize &middot; magnet off = free</span>
+  </div>
+
   <div class="playlist-hscroll" #hscroll (scroll)="onHorizontalScroll($event)">
     <div class="hscroll-spacer" [style.width.px]="contentWidth()"></div>
   </div>
@@ -53,6 +67,18 @@
                 (click)="toggleClip.emit({ track: track.id, start: clip.start, active: true }); $event.stopPropagation()"
                 (contextmenu)="toggleClip.emit({ track: track.id, start: clip.start, active: false }); $event.preventDefault(); $event.stopPropagation()">
                 <span class="clip-name">{{ clip.name }}</span>
+                <span
+                  class="clip-handle left"
+                  title="Drag to resize"
+                  (pointerdown)="startClipResize($event, clip, 'left')"
+                  (click)="$event.stopPropagation()"
+                  (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
+                <span
+                  class="clip-handle right"
+                  title="Drag to resize"
+                  (pointerdown)="startClipResize($event, clip, 'right')"
+                  (click)="$event.stopPropagation()"
+                  (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
               </button>
             }
 

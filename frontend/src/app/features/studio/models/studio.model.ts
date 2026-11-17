@@ -15,6 +15,7 @@ export interface PianoRow {
   label: string;
   black: boolean;
   notes: boolean[];
+  lengths: number[];
 }
 
 export interface Pattern {
