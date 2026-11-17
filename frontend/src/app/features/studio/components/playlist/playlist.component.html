@@ -11,7 +11,11 @@
     </div>
   </div>
 
-  <div class="playlist-scroll">
+  <div class="playlist-hscroll" #hscroll (scroll)="onHorizontalScroll($event)">
+    <div class="hscroll-spacer" [style.width.px]="contentWidth()"></div>
+  </div>
+
+  <div class="playlist-scroll" #body (scroll)="onScroll($event)">
     <div class="playlist-content" [style.width.px]="contentWidth()">
       <div class="pl-ruler">
         <div class="track-head ruler-head">Tracks</div>

@@ -32,8 +32,14 @@ export class StudioStore implements OnDestroy {
   readonly stepCount = 16;
   readonly steps = Array.from({ length: this.stepCount }, (_, i) => i);
   readonly stepsPerBar = 16;
-  readonly playlistBars = 8;
-  readonly playlistTotalSteps = this.playlistBars * this.stepsPerBar;
+  readonly playlistBars = signal(8);
+  readonly playlistTotalSteps = computed(() => this.playlistBars() * this.stepsPerBar);
+  readonly playlistPalette = [
+    '#e2574c', '#e08a3c', '#d8c049', '#8bbf4a', '#42a5a0', '#4a7fd0',
+    '#8557c9', '#c057a8', '#d06a8c', '#b08a3c', '#7bc44a', '#3ac4a0',
+    '#3aa0c4', '#5a7fd0', '#8557c9', '#c057a8', '#d0684a', '#c9a03c',
+    '#6abf6a', '#4aa8a0'
+  ];
   readonly patternNames = ['Intro', 'Verse', 'Build', 'Drop', 'Break', 'Outro', 'Fill', 'Idea'];
   readonly browserSections: BrowserSection[] = [
     { title: 'Packs', items: ['Kicks', 'Snares', 'Claps', 'Hats', 'Percussion', 'Bass', 'Synths', 'FX'] },
@@ -653,21 +659,38 @@ export class StudioStore implements OnDestroy {
 
   private createPlaylistTracks(): PlaylistTrack[] {
     const channels = this.channels();
-    const palette = [
-      '#e2574c', '#e08a3c', '#d8c049', '#8bbf4a', '#42a5a0', '#4a7fd0',
-      '#8557c9', '#c057a8', '#d06a8c', '#b08a3c', '#7bc44a', '#3ac4a0',
-      '#3aa0c4', '#5a7fd0', '#8557c9', '#c057a8', '#d0684a', '#c9a03c',
-      '#6abf6a', '#4aa8a0'
-    ];
     return Array.from({ length: 20 }, (_, index) => {
       const channel = channels[index];
       return {
         id: index,
         name: channel?.name ?? `Track ${index + 1}`,
-        color: channel?.color ?? palette[index % palette.length],
+        color: channel?.color ?? this.playlistPalette[index % this.playlistPalette.length],
         muted: false,
         solo: false
       };
+    });
+  }
+
+  extendPlaylistBars(count = 8): void {
+    this.playlistBars.update(bars => bars + count);
+  }
+
+  extendPlaylistTracks(count = 8): void {
+    this.playlistTracks.update(list => {
+      const start = list.length;
+      return [
+        ...list,
+        ...Array.from({ length: count }, (_, offset) => {
+          const index = start + offset;
+          return {
+            id: index,
+            name: `Track ${index + 1}`,
+            color: this.playlistPalette[index % this.playlistPalette.length],
+            muted: false,
+            solo: false
+          };
+        })
+      ];
     });
   }
 
@@ -725,7 +748,7 @@ export class StudioStore implements OnDestroy {
 
   private advanceStep(): void {
     if (this.songMode()) {
-      this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps;
+      this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps();
       this.playlistStep.set(this.absoluteStep);
       this.currentStep.set(this.absoluteStep % this.stepCount);
       this.triggerPlaylistStep(this.absoluteStep);

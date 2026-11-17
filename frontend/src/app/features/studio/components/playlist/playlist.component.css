@@ -25,12 +25,68 @@
   display: none;
 }
 
+.playlist-hscroll {
+  flex: 0 0 auto;
+  width: 100%;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  background: #141518;
+  border-bottom: 1px solid #2a2d31;
+  scrollbar-width: thin;
+  scrollbar-color: #f5a623 #141518;
+}
+
+.hscroll-spacer {
+  height: 1px;
+}
+
+.playlist-hscroll::-webkit-scrollbar {
+  height: 13px;
+}
+
+.playlist-hscroll::-webkit-scrollbar-track {
+  background: #141518;
+}
+
+.playlist-hscroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #5c626b, #3b3f45);
+  border: 2px solid #141518;
+  border-radius: 7px;
+}
+
+.playlist-hscroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f5a623, #c97e00);
+}
+
 .playlist-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: scroll;
+  overflow-x: hidden;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #f5a623 #141518;
   background: #15161a;
+}
+
+.playlist-scroll::-webkit-scrollbar {
+  width: 13px;
+  height: 13px;
+}
+
+.playlist-scroll::-webkit-scrollbar-track {
+  background: #141518;
+  border-radius: 3px;
+}
+
+.playlist-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #5c626b, #3b3f45);
+  border: 2px solid #141518;
+  border-radius: 7px;
+}
+
+.playlist-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f5a623, #c97e00);
 }
 
 .playlist-content {

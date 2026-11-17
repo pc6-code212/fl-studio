@@ -138,7 +138,7 @@
         <app-playlist
           [tracks]="store.playlistTracks()"
           [clips]="store.playlistClips()"
-          [bars]="store.playlistBars"
+          [bars]="store.playlistBars()"
           [stepsPerBar]="store.stepsPerBar"
           [playhead]="store.playlistStep()"
           [isPlaying]="store.isPlaying()"
@@ -148,6 +148,8 @@
           (toggleClip)="store.setPlaylistClip($event.track, $event.start, $event.active)"
           (toggleMute)="store.togglePlaylistMute($event)"
           (toggleSolo)="store.togglePlaylistSolo($event)"
+          (extendBars)="store.extendPlaylistBars(8)"
+          (extendTracks)="store.extendPlaylistTracks(8)"
           (collapseToggle)="store.togglePanelCollapsed('playlist')"
           (maximizeToggle)="store.togglePanelMaximized('playlist')"
           (floatToggle)="store.togglePanelFloating('playlist')"
