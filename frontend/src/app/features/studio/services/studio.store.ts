@@ -132,6 +132,7 @@ export class StudioStore implements OnDestroy {
     }
   });
   readonly frontPanel = signal<PanelId>('mixer');
+  readonly centerPanel = signal<PanelId>('playlist');
   readonly rackHeight = signal(320);
   readonly playlistHeight = signal(240);
   readonly mixerWidth = signal(316);
@@ -258,16 +259,31 @@ export class StudioStore implements OnDestroy {
   }
 
   togglePanel(id: PanelId): void {
-    this.panels.update(states => {
-      const current = states[id];
-      const visible = current.open && !current.collapsed;
-      return {
-        ...states,
-        [id]: visible
-          ? { ...current, open: false, maximized: false }
-          : { ...current, open: true, collapsed: false }
-      };
-    });
+    const current = this.panels()[id];
+    const visible = current.open && !current.collapsed;
+    if (visible) {
+      this.closePanel(id);
+      return;
+    }
+    const center = this.panels()[this.centerPanel()];
+    const centerVisible = center.open && !center.collapsed;
+    const floating = this.centerPanel() !== id && centerVisible;
+    if (!floating) {
+      this.centerPanel.set(id);
+    }
+    this.panels.update(states => ({
+      ...states,
+      [id]: {
+        ...states[id],
+        open: true,
+        collapsed: false,
+        maximized: false,
+        floating
+      }
+    }));
+    if (floating) {
+      this.frontPanel.set(id);
+    }
   }
 
   closePanel(id: PanelId): void {
@@ -289,40 +305,49 @@ export class StudioStore implements OnDestroy {
   }
 
   togglePanelMaximized(id: PanelId): void {
+    const maximized = !this.panels()[id].maximized;
+    if (maximized) {
+      this.centerPanel.set(id);
+    }
     this.panels.update(states => {
-      const maximized = !states[id].maximized;
       const next = {} as PanelStates;
       (Object.keys(states) as PanelId[]).forEach(key => {
-        next[key] = { ...states[key], maximized: key === id ? maximized : false };
+        const state = { ...states[key], maximized: key === id ? maximized : false };
+        if (maximized && key !== id && state.open && !state.floating) {
+          state.floating = true;
+        }
+        next[key] = state;
       });
       next[id] = { ...next[id], open: true, collapsed: false, floating: false };
       return next;
     });
+    if (maximized) {
+      this.frontPanel.set(id);
+    }
   }
 
   togglePanelFloating(id: PanelId): void {
-    const current = this.panels()[id];
-    const floating = !current.floating;
-    this.panels.update(states => ({
-      ...states,
-      [id]: {
-        ...states[id],
-        open: true,
-        collapsed: false,
-        maximized: false,
-        floating
-      }
-    }));
-    if (floating) {
-      this.frontPanel.set(id);
-    } else if (this.frontPanel() === id) {
-      const other = (Object.keys(this.panels()) as PanelId[]).find(
-        key => key !== id && this.panels()[key].floating
-      );
-      if (other) {
-        this.frontPanel.set(other);
-      }
+    const floating = !this.panels()[id].floating;
+    if (!floating) {
+      this.centerPanel.set(id);
     }
+    this.panels.update(states => {
+      const next = {} as PanelStates;
+      (Object.keys(states) as PanelId[]).forEach(key => {
+        const state = { ...states[key] };
+        if (key === id) {
+          state.open = true;
+          state.collapsed = false;
+          state.maximized = false;
+          state.floating = floating;
+        } else if (!floating && state.open && !state.floating) {
+          state.floating = true;
+        }
+        next[key] = state;
+      });
+      return next;
+    });
+    this.frontPanel.set(id);
   }
 
   bringPanelToFront(id: PanelId): void {
@@ -468,9 +493,21 @@ export class StudioStore implements OnDestroy {
 
   openInPianoRoll(index: number): void {
     this.selectedChannel.set(index);
+    const center = this.panels()[this.centerPanel()];
+    const centerVisible = center.open && !center.collapsed;
+    const floating = this.centerPanel() !== 'pianoRoll' && centerVisible;
+    if (!floating) {
+      this.centerPanel.set('pianoRoll');
+    }
     this.panels.update(states => ({
       ...states,
-      pianoRoll: { ...states.pianoRoll, open: true, collapsed: false, maximized: false }
+      pianoRoll: {
+        ...states.pianoRoll,
+        open: true,
+        collapsed: false,
+        maximized: false,
+        floating
+      }
     }));
     this.frontPanel.set('pianoRoll');
   }
@@ -659,7 +696,7 @@ export class StudioStore implements OnDestroy {
 
   private createPlaylistTracks(): PlaylistTrack[] {
     const channels = this.channels();
-    return Array.from({ length: 20 }, (_, index) => {
+    return Array.from({ length: 50 }, (_, index) => {
       const channel = channels[index];
       return {
         id: index,
@@ -673,25 +710,6 @@ export class StudioStore implements OnDestroy {
 
   extendPlaylistBars(count = 8): void {
     this.playlistBars.update(bars => bars + count);
-  }
-
-  extendPlaylistTracks(count = 8): void {
-    this.playlistTracks.update(list => {
-      const start = list.length;
-      return [
-        ...list,
-        ...Array.from({ length: count }, (_, offset) => {
-          const index = start + offset;
-          return {
-            id: index,
-            name: `Track ${index + 1}`,
-            color: this.playlistPalette[index % this.playlistPalette.length],
-            muted: false,
-            solo: false
-          };
-        })
-      ];
-    });
   }
 
   private createPlaylistClips(): PlaylistClip[] {

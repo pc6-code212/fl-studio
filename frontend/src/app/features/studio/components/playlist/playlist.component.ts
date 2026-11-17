@@ -37,7 +37,6 @@ export class PlaylistComponent {
   readonly toggleMute = output<number>();
   readonly toggleSolo = output<number>();
   readonly extendBars = output<void>();
-  readonly extendTracks = output<void>();
   readonly collapseToggle = output<void>();
   readonly maximizeToggle = output<void>();
   readonly floatToggle = output<void>();
@@ -70,9 +69,6 @@ export class PlaylistComponent {
     const hscroll = this.hscrollRef?.nativeElement;
     if (hscroll && Math.abs(hscroll.scrollLeft - el.scrollLeft) > 1) {
       hscroll.scrollLeft = el.scrollLeft;
-    }
-    if (el.scrollHeight > el.clientHeight + 1 && el.scrollTop + el.clientHeight >= el.scrollHeight - 48) {
-      this.extendTracks.emit();
     }
   }
 
