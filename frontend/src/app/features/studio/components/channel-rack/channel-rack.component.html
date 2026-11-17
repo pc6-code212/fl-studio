@@ -12,8 +12,12 @@
   </div>
 
   <div class="rack-ruler">
-    <span class="cell"></span><span class="cell"></span><span class="cell"></span>
-    <span class="cell"></span><span class="cell"></span>
+    <span class="cell"></span>
+    <span class="cell">PAN</span>
+    <span class="cell">VOL</span>
+    <span class="cell">MIX</span>
+    <span class="cell name-col">CHANNEL</span>
+    <span class="cell">SOLO</span>
     @for (s of steps(); track s) {
       <span class="step-num" [class.beat]="s % 4 === 0">{{ s + 1 }}</span>
     }
@@ -27,20 +31,53 @@
         [class.muted]="ch.muted"
         (click)="select.emit(i)">
 
-        <button class="ch-name" [style.border-left-color]="ch.color" (click)="preview.emit(ch)">
+        <button
+          class="radio-btn"
+          [class.on]="!ch.muted"
+          [title]="ch.muted ? 'Unmute' : 'Mute'"
+          (click)="toggleMute.emit(ch.id); $event.stopPropagation()">
+          <span class="led-dot" [style.background]="ch.color"></span>
+        </button>
+
+        <div
+          class="knob pan"
+          [title]="'Pan ' + ch.pan"
+          (pointerdown)="startPanDrag($event, ch)">
+          <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.pan) + 'deg)'"></div>
+        </div>
+
+        <div
+          class="knob vol"
+          [title]="'Volume ' + ch.volume"
+          (pointerdown)="startVolumeDrag($event, ch)">
+          <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.volume) + 'deg)'"></div>
+        </div>
+
+        <input
+          class="mixer-input"
+          type="number"
+          min="1"
+          max="99"
+          title="Mixer channel"
+          [ngModel]="ch.mixerChannel"
+          (ngModelChange)="mixerChannelChange.emit({ id: ch.id, mixerChannel: $event })"
+          (click)="$event.stopPropagation()">
+
+        <button
+          class="ch-name"
+          [style.border-left-color]="ch.color"
+          title="Double-click to open in Piano Roll"
+          (click)="preview.emit(ch)"
+          (dblclick)="openPianoRoll.emit(i)">
           <span class="led" [style.background]="ch.color"></span>
           <span class="ch-label">{{ ch.name }}</span>
         </button>
 
-        <button class="mini-btn mute" [class.on]="ch.muted" title="Mute" (click)="toggleMute.emit(ch.id); $event.stopPropagation()">M</button>
-        <button class="mini-btn solo" [class.on]="ch.solo" title="Solo" (click)="toggleSolo.emit(ch.id); $event.stopPropagation()">S</button>
-
-        <div class="knob vol" [title]="'Volume ' + ch.volume">
-          <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.volume) + 'deg)'"></div>
-        </div>
-        <div class="knob pan" [title]="'Pan ' + ch.pan">
-          <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.pan) + 'deg)'"></div>
-        </div>
+        <button
+          class="solo-btn"
+          [class.on]="ch.solo"
+          title="Solo"
+          (click)="toggleSolo.emit(ch.id); $event.stopPropagation()">&#9654;</button>
 
         @for (s of steps(); track s) {
           <button

@@ -23,7 +23,7 @@
 .rack-ruler,
 .rack-row {
   display: grid;
-  grid-template-columns: 126px 26px 26px 32px 32px repeat(16, minmax(0, 1fr));
+  grid-template-columns: 24px 30px 30px 44px 120px 30px repeat(16, minmax(0, 1fr));
   gap: 4px;
   align-items: center;
   padding: 3px 8px;
@@ -33,6 +33,19 @@
   padding-top: 5px;
   padding-bottom: 2px;
   border-bottom: 1px solid var(--line);
+}
+
+.cell {
+  text-align: center;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #6e737a;
+}
+
+.name-col {
+  text-align: left;
+  padding-left: 4px;
 }
 
 .step-num {
@@ -103,6 +116,40 @@
   box-shadow: 0 0 6px currentColor;
 }
 
+.radio-btn {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #0c0d0e;
+  background: radial-gradient(circle at 35% 30%, #3a3e44, #1a1c1f 72%);
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  cursor: pointer;
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.7);
+}
+
+.radio-btn:hover {
+  filter: brightness(1.2);
+}
+
+.led-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 0.22;
+}
+
+.radio-btn.on .led-dot {
+  opacity: 1;
+  box-shadow: 0 0 7px currentColor;
+}
+
+.radio-btn.on {
+  border-color: #4a4e55;
+}
+
 .knob {
   width: 26px;
   height: 26px;
@@ -114,6 +161,64 @@
   place-items: center;
   justify-self: center;
   box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.6);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.knob:hover {
+  border-color: #5a5f67;
+}
+
+.mixer-input {
+  width: 100%;
+  height: 24px;
+  padding: 0 3px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: #101114;
+  border: 1px solid #08090a;
+  border-radius: 3px;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.mixer-input::-webkit-outer-spin-button,
+.mixer-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.mixer-input:focus {
+  border-color: #6b4400;
+  box-shadow: 0 0 6px rgba(245, 166, 35, 0.35);
+}
+
+.solo-btn {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  border-radius: 3px;
+  border: 1px solid #0e0f11;
+  background: linear-gradient(180deg, #34383e, #25272b);
+  color: #7d828a;
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.solo-btn:hover {
+  filter: brightness(1.25);
+}
+
+.solo-btn.on {
+  background: linear-gradient(180deg, #d8c049, #a89025);
+  color: #1a1a1a;
+  border-color: #6b5a1a;
+  box-shadow: 0 0 8px rgba(216, 192, 73, 0.5);
 }
 
 .step {

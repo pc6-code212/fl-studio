@@ -13,6 +13,7 @@
   <div class="mixer-strips">
     @for (ch of channels(); track ch.id; let i = $index) {
       <div class="strip" [class.muted]="ch.muted">
+        <div class="strip-ch">{{ ch.mixerChannel }}</div>
         <div class="pan-knob">
           <div class="knob-dial" [style.transform]="'rotate(' + knobAngle(ch.pan) + 'deg)'"></div>
         </div>

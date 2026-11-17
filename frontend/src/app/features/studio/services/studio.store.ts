@@ -388,6 +388,23 @@ export class StudioStore implements OnDestroy {
     this.updateChannel(id, { volume: clamp(Number(volume) || 0, 0, 100) });
   }
 
+  setChannelPan(id: number, pan: number): void {
+    this.updateChannel(id, { pan: clamp(Number(pan) || 0, 0, 100) });
+  }
+
+  setChannelMixer(id: number, mixerChannel: number): void {
+    this.updateChannel(id, { mixerChannel: clamp(Math.round(Number(mixerChannel) || 1), 1, 99) });
+  }
+
+  openInPianoRoll(index: number): void {
+    this.selectedChannel.set(index);
+    this.panels.update(states => ({
+      ...states,
+      pianoRoll: { ...states.pianoRoll, open: true, collapsed: false, maximized: false }
+    }));
+    this.frontPanel.set('pianoRoll');
+  }
+
   togglePlaylistClip(trackId: number, start: number): void {
     const barStart = Math.floor(start / this.stepsPerBar) * this.stepsPerBar;
     const existing = this.playlistClips().find(
@@ -504,7 +521,17 @@ export class StudioStore implements OnDestroy {
       if (!empty) {
         on.forEach(step => (steps[step] = true));
       }
-      return { id, name, color, steps, volume: 78, pan: 50, muted: false, solo: false };
+      return {
+        id,
+        name,
+        color,
+        steps,
+        volume: 78,
+        pan: 50,
+        mixerChannel: id + 1,
+        muted: false,
+        solo: false
+      };
     };
 
     return [

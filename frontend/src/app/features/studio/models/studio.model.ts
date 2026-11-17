@@ -5,6 +5,7 @@ export interface Channel {
   steps: boolean[];
   volume: number;
   pan: number;
+  mixerChannel: number;
   muted: boolean;
   solo: boolean;
 }
