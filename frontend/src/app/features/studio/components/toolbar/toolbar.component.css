@@ -111,6 +111,75 @@
   gap: 6px;
 }
 
+.pattern-dropdown {
+  position: relative;
+}
+
+.tbtn.sm.on {
+  color: var(--accent);
+  border-color: #6b4400;
+}
+
+.tbtn.add {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.pattern-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 200;
+  min-width: 168px;
+  max-height: 280px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border-radius: 5px;
+  border: 1px solid #0c0d0f;
+  background: linear-gradient(180deg, #2d3136, #1d1f22);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6);
+}
+
+.pattern-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text);
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pattern-item:hover {
+  background: rgba(245, 166, 35, 0.14);
+}
+
+.pattern-item.active {
+  background: linear-gradient(180deg, #f5a623, #d97f00);
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+.pattern-item-num {
+  min-width: 18px;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.pattern-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .pattern-display {
   min-width: 122px;
   padding: 3px 10px;

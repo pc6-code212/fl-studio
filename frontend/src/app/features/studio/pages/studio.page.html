@@ -7,6 +7,7 @@
   [songMode]="store.songMode()"
   [patternNumber]="store.patternNumber()"
   [patternName]="store.patternName()"
+  [patternList]="store.patternList()"
   [keyboardPiano]="store.keyboardPiano()"
   [panels]="store.panels()"
   (playToggle)="store.togglePlay()"
@@ -17,8 +18,8 @@
   (songModeChange)="store.setSongMode($event)"
   (bpmChange)="store.setBpm($event)"
   (swingChange)="store.setSwing($event)"
-  (prevPattern)="store.prevPattern()"
-  (nextPattern)="store.nextPattern()" />
+  (patternSelect)="store.setPattern($event)"
+  (patternAdd)="store.addPattern()" />
 
 <main
   class="workspace"

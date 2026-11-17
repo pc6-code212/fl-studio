@@ -15,6 +15,13 @@ export interface PianoRow {
   notes: boolean[];
 }
 
+export interface Pattern {
+  id: number;
+  name: string;
+  channels: Channel[];
+  pianoRows: PianoRow[];
+}
+
 export interface PlaylistTrack {
   id: number;
   name: string;

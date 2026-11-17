@@ -12,12 +12,33 @@
   </div>
 
   <div class="pattern-select">
-    <button class="tbtn sm" (click)="prevPattern.emit()">&#8249;</button>
+    <div class="pattern-dropdown">
+      <button
+        class="tbtn sm"
+        title="Show pattern list"
+        [class.on]="patternMenuOpen()"
+        (click)="togglePatternMenu($event)">&#9662;</button>
+      @if (patternMenuOpen()) {
+        <ul class="pattern-menu">
+          @for (item of patternList(); track item.number) {
+            <li>
+              <button
+                class="pattern-item"
+                [class.active]="item.number === patternNumber()"
+                (click)="selectPattern(item.number)">
+                <span class="pattern-item-num">{{ item.number }}</span>
+                <span class="pattern-item-name">{{ item.name }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
     <div class="pattern-display">
       <span class="pattern-num">Pattern {{ patternNumber() }}</span>
       <span class="pattern-name">{{ patternName() }}</span>
     </div>
-    <button class="tbtn sm" (click)="nextPattern.emit()">&#8250;</button>
+    <button class="tbtn sm add" title="Add new pattern (new empty channel rack)" (click)="patternAdd.emit()">+</button>
   </div>
 
   <div class="tempo">

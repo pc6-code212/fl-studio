@@ -11,6 +11,7 @@ import {
   LibraryResponse,
   PanelId,
   PanelStates,
+  Pattern,
   PianoRow,
   PlaylistClip,
   PlaylistTrack
@@ -58,8 +59,13 @@ export class StudioStore implements OnDestroy {
     q: 'C5', '2': 'C#5', w: 'D5', '3': 'D#5', e: 'E5', r: 'F5', '5': 'F#5', t: 'G5', '6': 'G#5', y: 'A5', '7': 'A#5', u: 'B5'
   };
 
-  readonly channels = signal<Channel[]>(this.createChannels());
-  readonly pianoRows = signal<PianoRow[]>(this.createPianoRows());
+  readonly patterns = signal<Pattern[]>(this.createPatterns());
+  readonly activePattern = computed(() => this.patterns()[this.patternNumber() - 1]);
+  readonly channels = computed(() => this.activePattern()?.channels ?? []);
+  readonly pianoRows = computed(() => this.activePattern()?.pianoRows ?? []);
+  readonly patternList = computed(() =>
+    this.patterns().map((pattern, index) => ({ number: index + 1, name: pattern.name }))
+  );
 
   readonly playlistTracks = signal<PlaylistTrack[]>(this.createPlaylistTracks());
   readonly playlistClips = signal<PlaylistClip[]>(this.createPlaylistClips());
@@ -117,15 +123,16 @@ export class StudioStore implements OnDestroy {
   readonly playlistHeight = signal(240);
   readonly mixerWidth = signal(316);
 
-  readonly patternName = computed(
-    () => this.patternNames[(this.patternNumber() - 1) % this.patternNames.length]
+  readonly patternName = computed(() => this.activePattern()?.name ?? 'Pattern');
+  readonly selected = computed(
+    () => this.channels()[this.selectedChannel()] ?? this.channels()[0]
   );
-  readonly selected = computed(() => this.channels()[this.selectedChannel()]);
 
   private clock: ReturnType<typeof setInterval> | null = null;
   private previewAudio: HTMLAudioElement | null = null;
   private absoluteStep = 0;
   private nextClipId = 1000;
+  private nextPatternId = 100;
 
   ngOnDestroy(): void {
     this.stopClock();
@@ -312,12 +319,21 @@ export class StudioStore implements OnDestroy {
     this.selectedChannel.set(index);
   }
 
-  prevPattern(): void {
-    this.patternNumber.update(n => (n <= 1 ? 8 : n - 1));
+  setPattern(number: number): void {
+    if (number >= 1 && number <= this.patterns().length) {
+      this.patternNumber.set(number);
+    }
   }
 
-  nextPattern(): void {
-    this.patternNumber.update(n => (n >= 8 ? 1 : n + 1));
+  addPattern(): void {
+    const pattern: Pattern = {
+      id: this.nextPatternId++,
+      name: `Pattern ${this.patterns().length + 1}`,
+      channels: this.createChannels(true),
+      pianoRows: this.createPianoRows(false)
+    };
+    this.patterns.update(list => [...list, pattern]);
+    this.patternNumber.set(this.patterns().length);
   }
 
   toggleStep(id: number, step: number): void {
@@ -334,7 +350,11 @@ export class StudioStore implements OnDestroy {
   }
 
   toggleNote(rowIndex: number, step: number): void {
-    const rows = this.pianoRows().map((row, index) => {
+    const pattern = this.activePattern();
+    if (!pattern) {
+      return;
+    }
+    const rows = pattern.pianoRows.map((row, index) => {
       if (index !== rowIndex) {
         return row;
       }
@@ -342,8 +362,10 @@ export class StudioStore implements OnDestroy {
       notes[step] = !notes[step];
       return { ...row, notes };
     });
-    this.pianoRows.set(rows);
-    if (rows[rowIndex].notes[step]) {
+    this.patterns.update(list =>
+      list.map(item => (item.id === pattern.id ? { ...item, pianoRows: rows } : item))
+    );
+    if (rows[rowIndex] && rows[rowIndex].notes[step]) {
       this.engine.playPianoNote(rows[rowIndex].label);
     }
   }
@@ -385,7 +407,7 @@ export class StudioStore implements OnDestroy {
         start: barStart,
         length: this.stepsPerBar,
         pattern,
-        name: this.patternNames[(pattern - 1) % this.patternNames.length],
+        name: this.patterns()[pattern - 1]?.name ?? `Pattern ${pattern}`,
         color: track?.color ?? '#f5a623'
       }
     ]);
@@ -449,15 +471,39 @@ export class StudioStore implements OnDestroy {
   }
 
   private updateChannel(id: number, patch: Partial<Channel>): void {
-    this.channels.update(list =>
-      list.map(channel => (channel.id === id ? { ...channel, ...patch } : channel))
+    const pattern = this.activePattern();
+    if (!pattern) {
+      return;
+    }
+    this.patterns.update(list =>
+      list.map(item =>
+        item.id === pattern.id
+          ? {
+              ...item,
+              channels: item.channels.map(channel =>
+                channel.id === id ? { ...channel, ...patch } : channel
+              )
+            }
+          : item
+      )
     );
   }
 
-  private createChannels(): Channel[] {
+  private createPatterns(): Pattern[] {
+    return this.patternNames.map((name, index) => ({
+      id: index,
+      name,
+      channels: this.createChannels(),
+      pianoRows: this.createPianoRows()
+    }));
+  }
+
+  private createChannels(empty = false): Channel[] {
     const make = (id: number, name: string, color: string, on: number[] = []): Channel => {
       const steps = Array.from({ length: 16 }, () => false);
-      on.forEach(step => (steps[step] = true));
+      if (!empty) {
+        on.forEach(step => (steps[step] = true));
+      }
       return { id, name, color, steps, volume: 78, pan: 50, muted: false, solo: false };
     };
 
@@ -473,7 +519,7 @@ export class StudioStore implements OnDestroy {
     ];
   }
 
-  private createPianoRows(): PianoRow[] {
+  private createPianoRows(withMelody = true): PianoRow[] {
     const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const labels: string[] = [];
     for (let octave = 0; octave <= 10; octave++) {
@@ -500,13 +546,15 @@ export class StudioStore implements OnDestroy {
       ['A#5', [2, 10]],
       ['F5', [6, 14]]
     ];
-    melody.forEach(([label, cols]) => {
-      const index = rowIndex.get(label);
-      if (index === undefined) {
-        return;
-      }
-      cols.forEach(col => (rows[index].notes[col] = true));
-    });
+    if (withMelody) {
+      melody.forEach(([label, cols]) => {
+        const index = rowIndex.get(label);
+        if (index === undefined) {
+          return;
+        }
+        cols.forEach(col => (rows[index].notes[col] = true));
+      });
+    }
 
     return rows;
   }
