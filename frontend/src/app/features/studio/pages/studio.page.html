@@ -102,6 +102,7 @@
           [currentStep]="store.currentStep()"
           [isPlaying]="store.isPlaying()"
           [channelName]="store.selected().name"
+          [pressedNotes]="store.pressedNotes()"
           [collapsed]="store.panels().pianoRoll.collapsed"
           [maximized]="store.panels().pianoRoll.maximized"
           (toggleNote)="store.toggleNote($event.row, $event.step)"

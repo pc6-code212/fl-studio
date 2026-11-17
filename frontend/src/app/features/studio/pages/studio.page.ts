@@ -193,4 +193,17 @@ export class StudioPage implements OnInit {
       this.store.playKeyboardNote(key);
     }
   }
+
+  @HostListener('window:keyup', ['$event'])
+  handleKeyup(event: KeyboardEvent): void {
+    if (!this.store.keyboardPiano()) {
+      return;
+    }
+    this.store.releaseKeyboardNote(event.key);
+  }
+
+  @HostListener('window:blur')
+  handleWindowBlur(): void {
+    this.store.releaseAllKeyboardNotes();
+  }
 }

@@ -53,6 +53,7 @@ export class StudioStore implements OnDestroy {
   readonly patternNumber = signal(1);
   readonly activeBrowserTab = signal<BrowserTab>('packs');
   readonly keyboardPiano = signal(true);
+  readonly pressedNotes = signal<string[]>([]);
 
   readonly pianoKeyMap: Record<string, string> = {
     z: 'C4', s: 'C#4', x: 'D4', d: 'D#4', c: 'E4', v: 'F4', g: 'F#4', b: 'G4', h: 'G#4', n: 'A4', j: 'A#4', m: 'B4',
@@ -135,6 +136,7 @@ export class StudioStore implements OnDestroy {
   private absoluteStep = 0;
   private nextClipId = 1000;
   private nextPatternId = 100;
+  private readonly heldKeys = new Set<string>();
 
   ngOnDestroy(): void {
     this.stopClock();
@@ -196,14 +198,43 @@ export class StudioStore implements OnDestroy {
   }
 
   toggleKeyboardPiano(): void {
-    this.keyboardPiano.update(enabled => !enabled);
+    const enabled = !this.keyboardPiano();
+    this.keyboardPiano.set(enabled);
+    if (!enabled) {
+      this.releaseAllKeyboardNotes();
+    }
   }
 
   playKeyboardNote(key: string): void {
-    const label = this.pianoKeyMap[key.toLowerCase()];
-    if (label) {
-      this.engine.playPianoNote(label);
+    const lowered = key.toLowerCase();
+    const label = this.pianoKeyMap[lowered];
+    if (!label) {
+      return;
     }
+    this.heldKeys.add(lowered);
+    this.pressedNotes.set(this.resolveHeldNotes());
+    const channel = this.selected();
+    if (channel) {
+      this.engine.playChannelNote(channel.name, channel.volume, label);
+    }
+  }
+
+  releaseKeyboardNote(key: string): void {
+    const lowered = key.toLowerCase();
+    if (this.heldKeys.delete(lowered)) {
+      this.pressedNotes.set(this.resolveHeldNotes());
+    }
+  }
+
+  releaseAllKeyboardNotes(): void {
+    if (this.heldKeys.size > 0) {
+      this.heldKeys.clear();
+      this.pressedNotes.set([]);
+    }
+  }
+
+  private resolveHeldNotes(): string[] {
+    return Array.from(this.heldKeys).map(key => this.pianoKeyMap[key]);
   }
 
   togglePanel(id: PanelId): void {

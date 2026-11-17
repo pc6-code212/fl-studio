@@ -78,6 +78,17 @@
   color: #8b8b8b;
 }
 
+.key.pressed {
+  background: linear-gradient(180deg, #ffb347, #e88400);
+  color: #1a1a1a;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.7);
+}
+
+.piano-row.pressed .note-cell {
+  box-shadow: inset 0 0 0 1px rgba(245, 166, 35, 0.5);
+}
+
 .note-cell {
   border: 1px solid #131417;
   border-radius: 2px;

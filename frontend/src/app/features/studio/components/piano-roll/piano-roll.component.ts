@@ -27,6 +27,7 @@ export class PianoRollComponent implements AfterViewInit {
   readonly currentStep = input.required<number>();
   readonly isPlaying = input.required<boolean>();
   readonly channelName = input.required<string>();
+  readonly pressedNotes = input<string[]>([]);
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
 
@@ -57,6 +58,10 @@ export class PianoRollComponent implements AfterViewInit {
       return;
     }
     this.headerDrag.emit(event);
+  }
+
+  isPressed(label: string): boolean {
+    return this.pressedNotes().includes(label);
   }
 
   centerOnNote(label: string): void {

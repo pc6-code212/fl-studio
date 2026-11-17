@@ -12,8 +12,8 @@
   </div>
   <div class="piano-body" #body>
     @for (row of rows(); track row.label; let rowIndex = $index) {
-      <div class="piano-row" [attr.data-note]="row.label">
-        <div class="key" [class.black]="row.black">{{ row.label }}</div>
+      <div class="piano-row" [attr.data-note]="row.label" [class.pressed]="isPressed(row.label)">
+        <div class="key" [class.black]="row.black" [class.pressed]="isPressed(row.label)">{{ row.label }}</div>
         @for (s of steps(); track s) {
           <button
             class="note-cell"
