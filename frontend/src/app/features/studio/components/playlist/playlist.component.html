@@ -64,7 +64,7 @@
                 [style.width.px]="clip.length * cellWidth"
                 [style.--clip-color]="clip.color"
                 [title]="clip.name"
-                (click)="toggleClip.emit({ track: track.id, start: clip.start, active: true }); $event.stopPropagation()"
+                (click)="selectedClip.set(clip.id); toggleClip.emit({ track: track.id, start: clip.start, active: true }); $event.stopPropagation()"
                 (contextmenu)="toggleClip.emit({ track: track.id, start: clip.start, active: false }); $event.preventDefault(); $event.stopPropagation()">
                 <span class="clip-name">{{ clip.name }}</span>
                 <span

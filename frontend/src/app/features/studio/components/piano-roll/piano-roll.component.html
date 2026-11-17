@@ -40,7 +40,7 @@
                 [class.beat]="s % 4 === 0"
                 [class.on]="row.notes[s]"
                 [class.playing]="isPlaying() && s === currentStep()"
-                (click)="toggleNote.emit({ row: rowIndex, step: s, active: true })"
+                (click)="selectedNote.set({ row: rowIndex, step: s }); toggleNote.emit({ row: rowIndex, step: s, active: true })"
                 (contextmenu)="toggleNote.emit({ row: rowIndex, step: s, active: false }); $event.preventDefault()"></button>
             }
           }
@@ -49,6 +49,7 @@
               class="note-block"
               [style.left.%]="note.start / steps().length * 100"
               [style.width.%]="note.length / steps().length * 100"
+              (click)="selectedNote.set({ row: rowIndex, step: note.start }); $event.stopPropagation()"
               (contextmenu)="toggleNote.emit({ row: rowIndex, step: note.start, active: false }); $event.preventDefault(); $event.stopPropagation()">
               <span
                 class="note-handle left"

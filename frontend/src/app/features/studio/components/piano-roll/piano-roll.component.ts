@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  HostListener,
   ViewChild,
   computed,
   input,
@@ -56,6 +57,7 @@ export class PianoRollComponent implements AfterViewInit {
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
   readonly snapSteps = computed(() => 4 / this.snapDivision());
+  readonly selectedNote = signal<{ row: number; step: number } | null>(null);
 
   ngAfterViewInit(): void {
     setTimeout(() => this.centerOnNote('C5'), 50);
@@ -81,6 +83,30 @@ export class PianoRollComponent implements AfterViewInit {
 
   setSnapDivision(event: Event): void {
     this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 4);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Delete' && event.key !== 'Backspace') {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+    const selected = this.selectedNote();
+    if (!selected) {
+      return;
+    }
+    event.preventDefault();
+    this.toggleNote.emit({ row: selected.row, step: selected.step, active: false });
+    this.selectedNote.set(null);
   }
 
   noteLength(rowIndex: number, step: number): number {

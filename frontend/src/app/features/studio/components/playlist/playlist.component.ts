@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  HostListener,
   ViewChild,
   computed,
   input,
@@ -57,6 +58,7 @@ export class PlaylistComponent {
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
   readonly snapSteps = computed(() => 4 / this.snapDivision());
+  readonly selectedClip = signal<number | null>(null);
 
   @ViewChild('body') private bodyRef?: ElementRef<HTMLElement>;
   @ViewChild('hscroll') private hscrollRef?: ElementRef<HTMLElement>;
@@ -115,6 +117,35 @@ export class PlaylistComponent {
 
   setSnapDivision(event: Event): void {
     this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 4);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Delete' && event.key !== 'Backspace') {
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (
+      target &&
+      (target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable)
+    ) {
+      return;
+    }
+    const id = this.selectedClip();
+    if (id === null) {
+      return;
+    }
+    const clip = this.clips().find(item => item.id === id);
+    if (!clip) {
+      this.selectedClip.set(null);
+      return;
+    }
+    event.preventDefault();
+    this.toggleClip.emit({ track: clip.track, start: clip.start, active: false });
+    this.selectedClip.set(null);
   }
 
   startClipResize(event: PointerEvent, clip: PlaylistClip, side: 'left' | 'right'): void {
