@@ -7,9 +7,10 @@
   [songMode]="store.songMode()"
   [patternNumber]="store.patternNumber()"
   [patternName]="store.patternName()"
-  [patternList]="store.patternList()"
-  [keyboardPiano]="store.keyboardPiano()"
-  [panels]="store.panels()"
+  [patternList]="store.patternList()"      [keyboardPiano]="store.keyboardPiano()"
+      [panels]="store.panels()"
+      [canUndo]="store.canUndo()"
+      [canRedo]="store.canRedo()"
   (playToggle)="store.togglePlay()"
   (stopPressed)="store.stop()"
   (recordToggle)="store.toggleRecord()"
@@ -18,8 +19,9 @@
   (songModeChange)="store.setSongMode($event)"
   (bpmChange)="store.setBpm($event)"
   (swingChange)="store.setSwing($event)"
-  (patternSelect)="store.setPattern($event)"
-  (patternAdd)="store.addPattern()" />
+  (patternSelect)="store.setPattern($event)"      (patternAdd)="store.addPattern()"
+      (undo)="store.undo()"
+      (redo)="store.redo()" />
 
 <main
   class="workspace"

@@ -190,8 +190,10 @@ export class StudioStore implements OnDestroy {
     this.redoStack.update(stack => [...stack, current]);
     this.isRestoring = true;
     this.restoreHistoryState(JSON.parse(previous));
-    this.isRestoring = false;
-    this.lastSnapshot = this.serializeHistoryState();
+    setTimeout(() => {
+      this.isRestoring = false;
+      this.lastSnapshot = this.serializeHistoryState();
+    }, 0);
   }
 
   redo(): void {
@@ -204,8 +206,10 @@ export class StudioStore implements OnDestroy {
     this.undoStack.update(stack => [...stack, current]);
     this.isRestoring = true;
     this.restoreHistoryState(JSON.parse(next));
-    this.isRestoring = false;
-    this.lastSnapshot = this.serializeHistoryState();
+    setTimeout(() => {
+      this.isRestoring = false;
+      this.lastSnapshot = this.serializeHistoryState();
+    }, 0);
   }
 
   private serializeHistoryState(): string {

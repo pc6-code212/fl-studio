@@ -34,6 +34,8 @@ export class ToolbarComponent {
   readonly patternList = input.required<PatternListItem[]>();
   readonly keyboardPiano = input.required<boolean>();
   readonly panels = input.required<PanelStates>();
+  readonly canUndo = input<boolean>(false);
+  readonly canRedo = input<boolean>(false);
 
   readonly playToggle = output<void>();
   readonly stopPressed = output<void>();
@@ -45,6 +47,8 @@ export class ToolbarComponent {
   readonly swingChange = output<number>();
   readonly patternSelect = output<number>();
   readonly patternAdd = output<void>();
+  readonly undo = output<void>();
+  readonly redo = output<void>();
 
   readonly patternMenuOpen = signal(false);
 

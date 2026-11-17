@@ -1,5 +1,7 @@
 <section class="toolbar">
   <div class="transport">
+    <button class="tbtn" title="Undo (Ctrl+Z)" [disabled]="!canUndo()" (click)="undo.emit()">&#8634;</button>
+    <button class="tbtn" title="Redo (Ctrl+Y)" [disabled]="!canRedo()" (click)="redo.emit()">&#8635;</button>
     <button class="tbtn" title="Rewind" (click)="stopPressed.emit()">&#9198;</button>
     <button class="tbtn stop" title="Stop" (click)="stopPressed.emit()">&#9632;</button>
     <button class="tbtn play" [class.on]="isPlaying()" title="Play / Pause (Space)" (click)="playToggle.emit()">&#9654;</button>

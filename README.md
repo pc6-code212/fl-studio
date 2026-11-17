@@ -1,5 +1,7 @@
 # FL Studio–Style DAW
 
+![Preview](assets/preview.png)
+
 An Angular + Flask music workstation with a channel rack, piano roll, mixer, browser and a Web Audio synth engine.
 
 ## Run
