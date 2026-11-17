@@ -56,8 +56,12 @@ export class StudioStore implements OnDestroy {
   readonly pressedNotes = signal<string[]>([]);
 
   readonly pianoKeyMap: Record<string, string> = {
-    z: 'C4', s: 'C#4', x: 'D4', d: 'D#4', c: 'E4', v: 'F4', g: 'F#4', b: 'G4', h: 'G#4', n: 'A4', j: 'A#4', m: 'B4',
-    q: 'C5', '2': 'C#5', w: 'D5', '3': 'D#5', e: 'E5', r: 'F5', '5': 'F#5', t: 'G5', '6': 'G#5', y: 'A5', '7': 'A#5', u: 'B5'
+    z: 'C4', s: 'C#4', x: 'D4', d: 'D#4', c: 'E4', v: 'F4', g: 'F#4', b: 'G4',
+    h: 'G#4', n: 'A4', j: 'A#4', m: 'B4', ',': 'C5', l: 'C#5', '.': 'D5',
+    ';': 'D#5', '/': 'E5',
+    q: 'C5', '2': 'C#5', w: 'D5', '3': 'D#5', e: 'E5', r: 'F5', '5': 'F#5', t: 'G5',
+    '6': 'G#5', y: 'A5', '7': 'A#5', u: 'B5', i: 'C6', '9': 'C#6', o: 'D6',
+    '0': 'D#6', p: 'E6', '[': 'F6', '=': 'F#6', ']': 'G6'
   };
 
   readonly patterns = signal<Pattern[]>(this.createPatterns());
