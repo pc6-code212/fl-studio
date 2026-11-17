@@ -23,7 +23,8 @@
 <main
   class="workspace"
   [style.grid-template-columns]="workspaceColumns()"
-  [style.--rack-h]="store.rackHeight() + 'px'">
+  [style.--rack-h]="store.rackHeight() + 'px'"
+  [style.--playlist-h]="store.playlistHeight() + 'px'">
   <app-browser-panel
     [tab]="store.activeBrowserTab()"
     [sections]="store.browserSections"
@@ -109,6 +110,47 @@
             class="resize-grip"
             title="Drag to resize"
             (pointerdown)="onPanelResizeStart('pianoRoll', $event)"></div>
+        }
+      </div>
+    }
+
+    @if (showPlaylistSplitter()) {
+      <div class="hsplit" title="Drag to resize" (pointerdown)="onPlaylistResizeStart($event)"></div>
+    }
+
+    @if (store.panels().playlist.open) {
+      <div
+        class="panel-slot"
+        [class.floating]="store.panels().playlist.floating"
+        [class.collapsed]="store.panels().playlist.collapsed"
+        [style.z-index]="store.frontPanel() === 'playlist' ? 140 : 130"
+        (pointerdown)="store.bringPanelToFront('playlist')"
+        [style.left.px]="store.panels().playlist.floating ? store.panels().playlist.x : null"
+        [style.top.px]="store.panels().playlist.floating ? store.panels().playlist.y : null"
+        [style.width.px]="store.panels().playlist.floating ? store.panels().playlist.width : null"
+        [style.height.px]="store.panels().playlist.floating ? store.panels().playlist.height : null">
+        <app-playlist
+          [tracks]="store.playlistTracks()"
+          [clips]="store.playlistClips()"
+          [bars]="store.playlistBars"
+          [stepsPerBar]="store.stepsPerBar"
+          [playhead]="store.playlistStep()"
+          [isPlaying]="store.isPlaying()"
+          [collapsed]="store.panels().playlist.collapsed"
+          [maximized]="store.panels().playlist.maximized"
+          (toggleClip)="store.togglePlaylistClip($event.track, $event.start)"
+          (toggleMute)="store.togglePlaylistMute($event)"
+          (toggleSolo)="store.togglePlaylistSolo($event)"
+          (collapseToggle)="store.togglePanelCollapsed('playlist')"
+          (maximizeToggle)="store.togglePanelMaximized('playlist')"
+          (floatToggle)="store.togglePanelFloating('playlist')"
+          (headerDrag)="onPanelDragStart('playlist', $event)"
+          (closePanel)="store.closePanel('playlist')" />
+        @if (store.panels().playlist.floating) {
+          <div
+            class="resize-grip"
+            title="Drag to resize"
+            (pointerdown)="onPanelResizeStart('playlist', $event)"></div>
         }
       </div>
     }

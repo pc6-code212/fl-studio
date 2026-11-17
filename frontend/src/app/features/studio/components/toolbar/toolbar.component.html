@@ -76,6 +76,11 @@
       (click)="panelToggle.emit('pianoRoll')">PIANO</button>
     <button
       class="panel-btn"
+      [class.active]="panels().playlist.open && !panels().playlist.collapsed"
+      title="Show / hide Playlist"
+      (click)="panelToggle.emit('playlist')">PLAYLIST</button>
+    <button
+      class="panel-btn"
       [class.active]="panels().mixer.open && !panels().mixer.collapsed"
       title="Show / hide Mixer"
       (click)="panelToggle.emit('mixer')">MIXER</button>

@@ -1,0 +1,66 @@
+<div class="playlist panel" [class.collapsed]="collapsed()" [class.maximized]="maximized()">
+  <div class="panel-header" title="Double-click to pop out or dock" (dblclick)="onHeaderDoubleClick($event)" (pointerdown)="onHeaderPointerDown($event)">
+    <h2>Playlist</h2>
+    <div class="header-actions">
+      <span class="hint">{{ bars() }} bars &middot; click a lane to add / remove pattern clips</span>
+      <div class="win-controls">
+        <button class="win-btn" title="Hide" (click)="collapseToggle.emit()">–</button>
+        <button class="win-btn" [title]="maximized() ? 'Restore' : 'Maximize'" (click)="maximizeToggle.emit()">{{ maximized() ? '❐' : '□' }}</button>
+        <button class="win-btn close" title="Close" (click)="closePanel.emit()">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="playlist-scroll">
+    <div class="playlist-content" [style.width.px]="contentWidth()">
+      <div class="pl-ruler">
+        <div class="track-head ruler-head">Tracks</div>
+        <div class="ruler-lane" [style.width.px]="laneWidth()">
+          @for (bar of barsArray(); track bar) {
+            <span
+              class="bar-label"
+              [style.left.px]="bar * stepsPerBar() * cellWidth">Bar {{ bar + 1 }}</span>
+          }
+        </div>
+      </div>
+
+      @for (track of tracks(); track track.id) {
+        <div class="pl-row">
+          <div class="track-head" [class.muted]="track.muted">
+            <span class="track-led" [style.background]="track.color"></span>
+            <span class="track-name">{{ track.name }}</span>
+            <button class="mini-btn mute" [class.on]="track.muted" title="Mute" (click)="toggleMute.emit(track.id)">M</button>
+            <button class="mini-btn solo" [class.on]="track.solo" title="Solo" (click)="toggleSolo.emit(track.id)">S</button>
+          </div>
+
+          <div class="track-lane" [style.width.px]="laneWidth()">
+            @for (s of allSteps(); track s) {
+              <button
+                class="lane-cell"
+                [class.bar]="s % stepsPerBar() === 0"
+                [class.beat]="s % 4 === 0"
+                [style.width.px]="cellWidth"
+                (click)="toggleClip.emit({ track: track.id, start: s })"></button>
+            }
+
+            @for (clip of clipsFor(track.id); track clip.id) {
+              <button
+                class="clip"
+                [style.left.px]="clip.start * cellWidth"
+                [style.width.px]="clip.length * cellWidth"
+                [style.--clip-color]="clip.color"
+                [title]="clip.name"
+                (click)="toggleClip.emit({ track: track.id, start: clip.start }); $event.stopPropagation()">
+                <span class="clip-name">{{ clip.name }}</span>
+              </button>
+            }
+
+            @if (isPlaying() && playhead() >= 0) {
+              <span class="playhead" [style.left.px]="playhead() * cellWidth"></span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

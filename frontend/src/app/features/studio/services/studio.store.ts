@@ -11,12 +11,15 @@ import {
   LibraryResponse,
   PanelId,
   PanelStates,
-  PianoRow
+  PianoRow,
+  PlaylistClip,
+  PlaylistTrack
 } from '../models/studio.model';
 
 const PANEL_MIN_SIZE: Record<PanelId, { width: number; height: number }> = {
   channelRack: { width: 460, height: 150 },
   pianoRoll: { width: 420, height: 220 },
+  playlist: { width: 520, height: 200 },
   mixer: { width: 360, height: 240 }
 };
 
@@ -27,6 +30,9 @@ export class StudioStore implements OnDestroy {
 
   readonly stepCount = 16;
   readonly steps = Array.from({ length: this.stepCount }, (_, i) => i);
+  readonly stepsPerBar = 16;
+  readonly playlistBars = 8;
+  readonly playlistTotalSteps = this.playlistBars * this.stepsPerBar;
   readonly patternNames = ['Intro', 'Verse', 'Build', 'Drop', 'Break', 'Outro', 'Fill', 'Idea'];
   readonly browserSections: BrowserSection[] = [
     { title: 'Packs', items: ['Kicks', 'Snares', 'Claps', 'Hats', 'Percussion', 'Bass', 'Synths', 'FX'] },
@@ -55,6 +61,10 @@ export class StudioStore implements OnDestroy {
   readonly channels = signal<Channel[]>(this.createChannels());
   readonly pianoRows = signal<PianoRow[]>(this.createPianoRows());
 
+  readonly playlistTracks = signal<PlaylistTrack[]>(this.createPlaylistTracks());
+  readonly playlistClips = signal<PlaylistClip[]>(this.createPlaylistClips());
+  readonly playlistStep = signal(-1);
+
   readonly library = signal<LibraryResponse | null>(null);
   readonly libraryLoading = signal(false);
   readonly libraryError = signal('');
@@ -81,6 +91,16 @@ export class StudioStore implements OnDestroy {
       width: 820,
       height: 420
     },
+    playlist: {
+      open: true,
+      collapsed: false,
+      maximized: false,
+      floating: false,
+      x: 320,
+      y: 280,
+      width: 900,
+      height: 360
+    },
     mixer: {
       open: true,
       collapsed: false,
@@ -94,6 +114,7 @@ export class StudioStore implements OnDestroy {
   });
   readonly frontPanel = signal<PanelId>('mixer');
   readonly rackHeight = signal(320);
+  readonly playlistHeight = signal(240);
   readonly mixerWidth = signal(316);
 
   readonly patternName = computed(
@@ -103,6 +124,8 @@ export class StudioStore implements OnDestroy {
 
   private clock: ReturnType<typeof setInterval> | null = null;
   private previewAudio: HTMLAudioElement | null = null;
+  private absoluteStep = 0;
+  private nextClipId = 1000;
 
   ngOnDestroy(): void {
     this.stopClock();
@@ -115,7 +138,9 @@ export class StudioStore implements OnDestroy {
       return;
     }
     this.isPlaying.set(true);
+    this.absoluteStep = 0;
     this.currentStep.set(-1);
+    this.playlistStep.set(-1);
     this.startClock();
   }
 
@@ -123,6 +148,8 @@ export class StudioStore implements OnDestroy {
     this.isPlaying.set(false);
     this.isRecording.set(false);
     this.currentStep.set(-1);
+    this.playlistStep.set(-1);
+    this.absoluteStep = 0;
     this.stopClock();
   }
 
@@ -273,6 +300,10 @@ export class StudioStore implements OnDestroy {
     this.rackHeight.set(clamp(Math.round(height), 120, 620));
   }
 
+  setPlaylistHeight(height: number): void {
+    this.playlistHeight.set(clamp(Math.round(height), 120, 620));
+  }
+
   setMixerWidth(width: number): void {
     this.mixerWidth.set(clamp(Math.round(width), 220, 640));
   }
@@ -333,6 +364,43 @@ export class StudioStore implements OnDestroy {
 
   setChannelVolume(id: number, volume: number): void {
     this.updateChannel(id, { volume: clamp(Number(volume) || 0, 0, 100) });
+  }
+
+  togglePlaylistClip(trackId: number, start: number): void {
+    const barStart = Math.floor(start / this.stepsPerBar) * this.stepsPerBar;
+    const existing = this.playlistClips().find(
+      clip => clip.track === trackId && clip.start === barStart
+    );
+    if (existing) {
+      this.playlistClips.update(list => list.filter(clip => clip.id !== existing.id));
+      return;
+    }
+    const track = this.playlistTracks().find(item => item.id === trackId);
+    const pattern = this.patternNumber();
+    this.playlistClips.update(list => [
+      ...list,
+      {
+        id: this.nextClipId++,
+        track: trackId,
+        start: barStart,
+        length: this.stepsPerBar,
+        pattern,
+        name: this.patternNames[(pattern - 1) % this.patternNames.length],
+        color: track?.color ?? '#f5a623'
+      }
+    ]);
+  }
+
+  togglePlaylistMute(trackId: number): void {
+    this.playlistTracks.update(list =>
+      list.map(track => (track.id === trackId ? { ...track, muted: !track.muted } : track))
+    );
+  }
+
+  togglePlaylistSolo(trackId: number): void {
+    this.playlistTracks.update(list =>
+      list.map(track => (track.id === trackId ? { ...track, solo: !track.solo } : track))
+    );
   }
 
   previewChannel(channel: Channel): void {
@@ -443,11 +511,69 @@ export class StudioStore implements OnDestroy {
     return rows;
   }
 
+  private createPlaylistTracks(): PlaylistTrack[] {
+    return this.channels().map(channel => ({
+      id: channel.id,
+      name: channel.name,
+      color: channel.color,
+      muted: false,
+      solo: false
+    }));
+  }
+
+  private createPlaylistClips(): PlaylistClip[] {
+    const tracks = this.playlistTracks();
+    const make = (
+      id: number,
+      trackIndex: number,
+      startBar: number,
+      bars: number,
+      pattern: number
+    ): PlaylistClip => {
+      const track = tracks[trackIndex];
+      return {
+        id,
+        track: track.id,
+        start: startBar * this.stepsPerBar,
+        length: bars * this.stepsPerBar,
+        pattern,
+        name: this.patternNames[(pattern - 1) % this.patternNames.length],
+        color: track.color
+      };
+    };
+
+    return [
+      make(0, 0, 0, 2, 1),
+      make(1, 0, 2, 2, 2),
+      make(2, 0, 4, 2, 3),
+      make(3, 0, 6, 2, 4),
+      make(4, 1, 2, 2, 2),
+      make(5, 1, 6, 2, 4),
+      make(6, 2, 1, 1, 1),
+      make(7, 2, 3, 2, 2),
+      make(8, 2, 5, 1, 3),
+      make(9, 2, 6, 2, 4),
+      make(10, 3, 4, 2, 3),
+      make(11, 3, 6, 2, 4),
+      make(12, 4, 0, 4, 1),
+      make(13, 4, 6, 2, 4),
+      make(14, 5, 2, 2, 2),
+      make(15, 5, 5, 1, 3),
+      make(16, 5, 6, 2, 4),
+      make(17, 6, 0, 2, 1),
+      make(18, 6, 4, 4, 3),
+      make(19, 7, 4, 1, 3),
+      make(20, 7, 6, 2, 4)
+    ];
+  }
+
   private startClock(): void {
     this.stopClock();
     const stepMs = 60000 / this.bpm() / 4;
     this.clock = setInterval(() => {
-      const next = (this.currentStep() + 1) % this.stepCount;
+      this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps;
+      this.playlistStep.set(this.absoluteStep);
+      const next = this.absoluteStep % this.stepCount;
       this.currentStep.set(next);
       this.triggerStep(next);
     }, stepMs);

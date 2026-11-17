@@ -15,6 +15,24 @@ export interface PianoRow {
   notes: boolean[];
 }
 
+export interface PlaylistTrack {
+  id: number;
+  name: string;
+  color: string;
+  muted: boolean;
+  solo: boolean;
+}
+
+export interface PlaylistClip {
+  id: number;
+  track: number;
+  start: number;
+  length: number;
+  pattern: number;
+  name: string;
+  color: string;
+}
+
 export interface LibraryNode {
   name: string;
   path: string;
@@ -44,7 +62,7 @@ export interface BrowserSection {
   items: string[];
 }
 
-export type PanelId = 'channelRack' | 'pianoRoll' | 'mixer';
+export type PanelId = 'channelRack' | 'pianoRoll' | 'playlist' | 'mixer';
 
 export interface PanelState {
   open: boolean;

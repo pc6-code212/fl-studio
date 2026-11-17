@@ -10,6 +10,7 @@ import { BrowserPanelComponent } from '@features/studio/components/browser-panel
 import { ChannelRackComponent } from '@features/studio/components/channel-rack/channel-rack.component';
 import { MixerPanelComponent } from '@features/studio/components/mixer-panel/mixer-panel.component';
 import { PianoRollComponent } from '@features/studio/components/piano-roll/piano-roll.component';
+import { PlaylistComponent } from '@features/studio/components/playlist/playlist.component';
 import { StatusBarComponent } from '@features/studio/components/status-bar/status-bar.component';
 import { ToolbarComponent } from '@features/studio/components/toolbar/toolbar.component';
 import { PanelId } from '@features/studio/models/studio.model';
@@ -23,6 +24,7 @@ import { StudioStore } from '@features/studio/services/studio.store';
     BrowserPanelComponent,
     ChannelRackComponent,
     PianoRollComponent,
+    PlaylistComponent,
     MixerPanelComponent,
     StatusBarComponent
   ],
@@ -53,6 +55,19 @@ export class StudioPage implements OnInit {
     );
   });
 
+  readonly showPlaylistSplitter = computed(() => {
+    const panels = this.store.panels();
+    return (
+      panels.playlist.open &&
+      panels.pianoRoll.open &&
+      !panels.playlist.collapsed &&
+      !panels.playlist.maximized &&
+      !panels.playlist.floating &&
+      !panels.pianoRoll.maximized &&
+      !panels.pianoRoll.floating
+    );
+  });
+
   ngOnInit(): void {
     this.store.loadLibrary();
   }
@@ -63,6 +78,20 @@ export class StudioPage implements OnInit {
     const startHeight = this.store.rackHeight();
     const move = (moveEvent: PointerEvent) =>
       this.store.setRackHeight(startHeight + moveEvent.clientY - startY);
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+  }
+
+  onPlaylistResizeStart(event: PointerEvent): void {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = this.store.playlistHeight();
+    const move = (moveEvent: PointerEvent) =>
+      this.store.setPlaylistHeight(startHeight - (moveEvent.clientY - startY));
     const stop = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);
