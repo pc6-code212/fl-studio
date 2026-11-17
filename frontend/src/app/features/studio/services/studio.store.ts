@@ -194,7 +194,17 @@ export class StudioStore implements OnDestroy {
   }
 
   setSongMode(value: boolean): void {
+    if (this.songMode() === value) {
+      return;
+    }
     this.songMode.set(value);
+    this.absoluteStep = -1;
+    this.currentStep.set(-1);
+    this.playlistStep.set(-1);
+    if (this.isPlaying()) {
+      this.startClock();
+      this.advanceStep();
+    }
   }
 
   setBrowserTab(tab: BrowserTab): void {
@@ -688,11 +698,17 @@ export class StudioStore implements OnDestroy {
   }
 
   private advanceStep(): void {
-    this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps;
-    this.playlistStep.set(this.absoluteStep);
-    const next = this.absoluteStep % this.stepCount;
-    this.currentStep.set(next);
-    this.triggerStep(next);
+    if (this.songMode()) {
+      this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps;
+      this.playlistStep.set(this.absoluteStep);
+      this.currentStep.set(this.absoluteStep % this.stepCount);
+      this.triggerPlaylistStep(this.absoluteStep);
+      return;
+    }
+    this.absoluteStep = (this.absoluteStep + 1) % this.stepCount;
+    this.currentStep.set(this.absoluteStep);
+    this.playlistStep.set(-1);
+    this.triggerPatternStep(this.activePattern(), this.absoluteStep);
   }
 
   private stopClock(): void {
@@ -702,16 +718,48 @@ export class StudioStore implements OnDestroy {
     }
   }
 
-  private triggerStep(step: number): void {
-    const anySolo = this.channels().some(channel => channel.solo);
-    for (const channel of this.channels()) {
+  private triggerPatternStep(pattern: Pattern | undefined, step: number): void {
+    if (!pattern) {
+      return;
+    }
+    const anySolo = pattern.channels.some(channel => channel.solo);
+    for (const channel of pattern.channels) {
       if (channel.muted || (anySolo && !channel.solo)) {
         continue;
       }
-      for (const row of channel.notes) {
-        if (row.notes[step]) {
-          this.playChannelNote(channel, row.label);
-        }
+      this.triggerChannelStep(channel, step);
+    }
+  }
+
+  private triggerPlaylistStep(songStep: number): void {
+    const tracks = this.playlistTracks();
+    const anySolo = tracks.some(track => track.solo);
+    for (const clip of this.playlistClips()) {
+      if (songStep < clip.start || songStep >= clip.start + clip.length) {
+        continue;
+      }
+      const track = tracks.find(item => item.id === clip.track);
+      if (!track || track.muted || (anySolo && !track.solo)) {
+        continue;
+      }
+      const pattern = this.patterns()[clip.pattern - 1];
+      if (!pattern) {
+        continue;
+      }
+      const channel =
+        pattern.channels.find(item => item.id === track.id) ?? pattern.channels[0];
+      if (!channel || channel.muted) {
+        continue;
+      }
+      const localStep = (songStep - clip.start) % this.stepCount;
+      this.triggerChannelStep(channel, localStep);
+    }
+  }
+
+  private triggerChannelStep(channel: Channel, step: number): void {
+    for (const row of channel.notes) {
+      if (row.notes[step]) {
+        this.playChannelNote(channel, row.label);
       }
     }
   }
