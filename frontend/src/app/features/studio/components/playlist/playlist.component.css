@@ -11,7 +11,13 @@
   overflow: hidden;
 }
 
+.playlist.fill {
+  flex: 1 1 auto;
+  height: auto;
+}
+
 .playlist.collapsed {
+  flex: 0 0 auto;
   height: auto;
 }
 

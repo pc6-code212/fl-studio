@@ -21,6 +21,7 @@ export class PlaylistComponent {
   readonly stepsPerBar = input.required<number>();
   readonly playhead = input.required<number>();
   readonly isPlaying = input.required<boolean>();
+  readonly fill = input<boolean>(false);
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
 

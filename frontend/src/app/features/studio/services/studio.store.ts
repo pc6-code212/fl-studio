@@ -85,7 +85,7 @@ export class StudioStore implements OnDestroy {
 
   readonly panels = signal<PanelStates>({
     channelRack: {
-      open: true,
+      open: false,
       collapsed: false,
       maximized: false,
       floating: false,
@@ -95,7 +95,7 @@ export class StudioStore implements OnDestroy {
       height: 320
     },
     pianoRoll: {
-      open: true,
+      open: false,
       collapsed: false,
       maximized: false,
       floating: false,
@@ -115,7 +115,7 @@ export class StudioStore implements OnDestroy {
       height: 360
     },
     mixer: {
-      open: true,
+      open: false,
       collapsed: false,
       maximized: false,
       floating: false,

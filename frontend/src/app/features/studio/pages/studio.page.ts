@@ -63,6 +63,7 @@ export class StudioPage implements OnInit {
       !panels.playlist.collapsed &&
       !panels.playlist.maximized &&
       !panels.playlist.floating &&
+      !panels.pianoRoll.collapsed &&
       !panels.pianoRoll.maximized &&
       !panels.pianoRoll.floating
     );

@@ -142,6 +142,7 @@
           [stepsPerBar]="store.stepsPerBar"
           [playhead]="store.playlistStep()"
           [isPlaying]="store.isPlaying()"
+          [fill]="!store.panels().pianoRoll.open || store.panels().pianoRoll.collapsed"
           [collapsed]="store.panels().playlist.collapsed"
           [maximized]="store.panels().playlist.maximized"
           (toggleClip)="store.setPlaylistClip($event.track, $event.start, $event.active)"
