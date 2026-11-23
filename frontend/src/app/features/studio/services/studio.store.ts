@@ -33,6 +33,11 @@ export class StudioStore implements OnDestroy {
   readonly stepCount = 16;
   readonly steps = Array.from({ length: this.stepCount }, (_, i) => i);
   readonly stepsPerBar = 16;
+  readonly pianoRollBars = signal(4);
+  readonly pianoRollTotalSteps = computed(() => this.pianoRollBars() * this.stepsPerBar);
+  readonly pianoRollSteps = computed(() =>
+    Array.from({ length: this.pianoRollTotalSteps() }, (_, i) => i)
+  );
   readonly playlistBars = signal(64);
   readonly playlistTotalSteps = computed(() => this.playlistBars() * this.stepsPerBar);
   readonly playlistPalette = [
@@ -56,6 +61,9 @@ export class StudioStore implements OnDestroy {
   readonly isRecording = signal(false);
   readonly songMode = signal(false);
   readonly currentStep = signal(-1);
+  readonly channelStep = computed(() =>
+    this.currentStep() < 0 ? -1 : this.currentStep() % this.stepCount
+  );
   readonly selectedChannel = signal(0);
   readonly patternNumber = signal(1);
   readonly activeBrowserTab = signal<BrowserTab>('packs');
@@ -98,7 +106,7 @@ export class StudioStore implements OnDestroy {
       }
       const notes: PlaylistClipNote[] = [];
       channel.notes.forEach((row, rowIndex) => {
-        for (let step = 0; step < this.stepCount; step++) {
+        for (let step = 0; step < this.pianoRollTotalSteps(); step++) {
           if (row.notes[step]) {
             notes.push({ row: rowIndex, step, length: row.lengths[step] ?? 1 });
           }
@@ -653,8 +661,9 @@ export class StudioStore implements OnDestroy {
     if (!channel || !row) {
       return;
     }
-    const newStart = clamp(Math.round(start), 0, this.stepCount - 1);
-    const newLength = clamp(Number(length) || 1, 0.25, this.stepCount - newStart);
+    const total = this.pianoRollTotalSteps();
+    const newStart = clamp(Math.round(start), 0, total - 1);
+    const newLength = clamp(Number(length) || 1, 0.25, total - newStart);
     const notes = channel.notes.map((item, index) => {
       if (index !== rowIndex) {
         return item;
@@ -921,8 +930,8 @@ export class StudioStore implements OnDestroy {
       .map(label => ({
         label,
         black: label.includes('#'),
-        notes: Array.from({ length: 16 }, () => false),
-        lengths: Array.from({ length: 16 }, () => 1)
+        notes: Array.from({ length: this.pianoRollTotalSteps() }, () => false),
+        lengths: Array.from({ length: this.pianoRollTotalSteps() }, () => 1)
       }));
   }
 
@@ -961,6 +970,28 @@ export class StudioStore implements OnDestroy {
 
   extendPlaylistBars(count = 8): void {
     this.playlistBars.update(bars => bars + count);
+  }
+
+  extendPianoRollBars(count = 4): void {
+    const oldTotal = this.pianoRollTotalSteps();
+    this.pianoRollBars.update(bars => bars + count);
+    const newTotal = this.pianoRollTotalSteps();
+    if (newTotal <= oldTotal) {
+      return;
+    }
+    this.patterns.update(list =>
+      list.map(pattern => ({
+        ...pattern,
+        channels: pattern.channels.map(channel => ({
+          ...channel,
+          notes: channel.notes.map(row => ({
+            ...row,
+            notes: [...row.notes, ...Array(newTotal - oldTotal).fill(false)],
+            lengths: [...row.lengths, ...Array(newTotal - oldTotal).fill(1)]
+          }))
+        }))
+      }))
+    );
   }
 
   private createPlaylistClips(): PlaylistClip[] {
@@ -1025,11 +1056,11 @@ export class StudioStore implements OnDestroy {
     if (this.songMode()) {
       this.absoluteStep = (this.absoluteStep + 1) % this.playlistTotalSteps();
       this.playlistStep.set(this.absoluteStep);
-      this.currentStep.set(this.absoluteStep % this.stepCount);
+      this.currentStep.set(this.absoluteStep % this.pianoRollTotalSteps());
       this.triggerPlaylistStep(this.absoluteStep);
       return;
     }
-    this.absoluteStep = (this.absoluteStep + 1) % this.stepCount;
+    this.absoluteStep = (this.absoluteStep + 1) % this.pianoRollTotalSteps();
     this.currentStep.set(this.absoluteStep);
     this.playlistStep.set(-1);
     this.triggerPatternStep(this.activePattern(), this.absoluteStep);
@@ -1070,7 +1101,7 @@ export class StudioStore implements OnDestroy {
       if (!channel || channel.muted) {
         continue;
       }
-      const localStep = (songStep - clip.start) % this.stepCount;
+      const localStep = (songStep - clip.start) % this.pianoRollTotalSteps();
       this.triggerChannelStep(channel, localStep);
     }
   }

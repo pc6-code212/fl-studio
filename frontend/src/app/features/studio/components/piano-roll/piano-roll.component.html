@@ -25,7 +25,21 @@
     <span class="tool-hint">Drag note edges to resize &middot; magnet off = free</span>
   </div>
 
-  <div class="piano-body" #body>
+  <div class="piano-hscroll" #hscroll (scroll)="onHorizontalScroll($event)">
+    <div class="hscroll-spacer" [style.width.px]="contentWidth()"></div>
+  </div>
+
+  <div class="piano-body" #body (scroll)="onBodyScroll($event)">
+    <div class="pr-ruler">
+      <div class="key-spacer"></div>
+      <div class="ruler-lane" [style.width.px]="laneWidth()">
+        @for (bar of barIndexes(); track bar) {
+          <span
+            class="bar-label"
+            [style.left.px]="bar * stepsPerBar() * (cellWidth + cellGap)">Bar {{ bar + 1 }}</span>
+        }
+      </div>
+    </div>
     @for (row of rows(); track row.label; let rowIndex = $index) {
       <div class="piano-row" [attr.data-note]="row.label" [class.pressed]="isPressed(row.label)">
         <div
@@ -34,7 +48,10 @@
           [class.pressed]="isPressed(row.label)"
           (pointerdown)="onKeyPointerDown($event, row.label)"
           (pointerenter)="onKeyPointerEnter($event, row.label)">{{ row.label }}</div>
-        <div class="note-lane">
+        <div
+          class="note-lane"
+          [style.width.px]="laneWidth()"
+          [style.--cols]="steps().length">
           @for (s of steps(); track s) {
             @if (isCovered(rowIndex, s)) {
               <span class="note-spacer"></span>
@@ -43,6 +60,7 @@
                 class="note-cell"
                 [class.black]="row.black"
                 [class.beat]="s % snapSteps() === 0"
+                [class.bar-edge]="s % stepsPerBar() === 0"
                 [class.on]="row.notes[s]"
                 [class.playing]="isPlaying() && s === currentStep()"
                 (click)="selectedNote.set({ row: rowIndex, step: s }); toggleNote.emit({ row: rowIndex, step: s, active: true })"

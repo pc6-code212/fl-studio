@@ -35,6 +35,7 @@ export interface NoteResizeEvent {
 export class PianoRollComponent implements AfterViewInit {
   readonly rows = input.required<PianoRow[]>();
   readonly steps = input.required<number[]>();
+  readonly stepsPerBar = input<number>(16);
   readonly currentStep = input.required<number>();
   readonly isPlaying = input.required<boolean>();
   readonly channelName = input.required<string>();
@@ -46,6 +47,7 @@ export class PianoRollComponent implements AfterViewInit {
   readonly resizeNote = output<NoteResizeEvent>();
   readonly noteOn = output<string>();
   readonly noteOff = output<string>();
+  readonly extendBars = output<void>();
   readonly collapseToggle = output<void>();
   readonly maximizeToggle = output<void>();
   readonly floatToggle = output<void>();
@@ -53,14 +55,31 @@ export class PianoRollComponent implements AfterViewInit {
   readonly closePanel = output<void>();
 
   @ViewChild('body') private body?: ElementRef<HTMLElement>;
+  @ViewChild('hscroll') private hscrollRef?: ElementRef<HTMLElement>;
 
   private readonly rowHeight = 22;
   private activePointerNote: string | null = null;
+  private lastExtend = 0;
+
+  readonly cellWidth = 18;
+  readonly cellGap = 3;
+  readonly keyWidth = 45;
+  readonly laneWidth = computed(
+    () => this.steps().length * (this.cellWidth + this.cellGap) - this.cellGap
+  );
+  readonly contentWidth = computed(() => this.keyWidth + this.laneWidth());
+  readonly barIndexes = computed(() => {
+    const perBar = Math.max(1, this.stepsPerBar());
+    return Array.from(
+      { length: Math.ceil(this.steps().length / perBar) },
+      (_, index) => index
+    );
+  });
 
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
   readonly snapSteps = computed(() =>
-    Math.max(1, Math.round(this.steps().length / this.snapDivision()))
+    Math.max(1, Math.round(this.stepsPerBar() / this.snapDivision()))
   );
   readonly selectedNote = signal<{ row: number; step: number } | null>(null);
 
@@ -121,6 +140,31 @@ export class PianoRollComponent implements AfterViewInit {
       this.noteOff.emit(this.activePointerNote);
       this.activePointerNote = null;
     }
+  }
+
+  onBodyScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    const hscroll = this.hscrollRef?.nativeElement;
+    if (hscroll && Math.abs(hscroll.scrollLeft - el.scrollLeft) > 1) {
+      hscroll.scrollLeft = el.scrollLeft;
+    }
+  }
+
+  onHorizontalScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    const body = this.body?.nativeElement;
+    if (body && Math.abs(body.scrollLeft - el.scrollLeft) > 1) {
+      body.scrollLeft = el.scrollLeft;
+    }
+    if (el.scrollWidth - el.clientWidth - el.scrollLeft > 240) {
+      return;
+    }
+    const now = Date.now();
+    if (now - this.lastExtend < 400) {
+      return;
+    }
+    this.lastExtend = now;
+    this.extendBars.emit();
   }
 
   setSnapDivision(event: Event): void {

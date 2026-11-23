@@ -45,6 +45,7 @@ export class PlaylistComponent {
   readonly tracks = input.required<PlaylistTrack[]>();
   readonly clips = input.required<PlaylistClip[]>();
   readonly clipNotes = input<Record<number, PlaylistClipNote[]>>({});
+  readonly patternLength = input<number>(16);
   readonly bars = input.required<number>();
   readonly stepsPerBar = input.required<number>();
   readonly playhead = input.required<number>();
@@ -85,7 +86,7 @@ export class PlaylistComponent {
   readonly contentWidth = computed(() => this.headWidth + this.laneWidth());
   readonly clipBlocks = computed<Record<number, ClipNoteBlock[]>>(() => {
     const source = this.clipNotes();
-    const patternLength = Math.max(1, this.stepsPerBar());
+    const patternLength = Math.max(1, this.patternLength());
     const result: Record<number, ClipNoteBlock[]> = {};
     for (const clip of this.clips()) {
       const notes = source[clip.id] ?? [];
