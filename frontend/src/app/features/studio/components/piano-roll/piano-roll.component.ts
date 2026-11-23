@@ -44,6 +44,8 @@ export class PianoRollComponent implements AfterViewInit {
 
   readonly toggleNote = output<NoteToggleEvent>();
   readonly resizeNote = output<NoteResizeEvent>();
+  readonly noteOn = output<string>();
+  readonly noteOff = output<string>();
   readonly collapseToggle = output<void>();
   readonly maximizeToggle = output<void>();
   readonly floatToggle = output<void>();
@@ -53,6 +55,7 @@ export class PianoRollComponent implements AfterViewInit {
   @ViewChild('body') private body?: ElementRef<HTMLElement>;
 
   private readonly rowHeight = 22;
+  private activePointerNote: string | null = null;
 
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
@@ -79,6 +82,43 @@ export class PianoRollComponent implements AfterViewInit {
 
   isPressed(label: string): boolean {
     return this.pressedNotes().includes(label);
+  }
+
+  onKeyPointerDown(event: PointerEvent, label: string): void {
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    this.pressKey(label);
+  }
+
+  onKeyPointerEnter(event: PointerEvent, label: string): void {
+    if ((event.buttons & 1) !== 1) {
+      return;
+    }
+    this.pressKey(label);
+  }
+
+  @HostListener('window:pointerup')
+  @HostListener('window:pointercancel')
+  onPointerRelease(): void {
+    this.releaseKey();
+  }
+
+  private pressKey(label: string): void {
+    if (this.activePointerNote === label) {
+      return;
+    }
+    this.releaseKey();
+    this.activePointerNote = label;
+    this.noteOn.emit(label);
+  }
+
+  private releaseKey(): void {
+    if (this.activePointerNote !== null) {
+      this.noteOff.emit(this.activePointerNote);
+      this.activePointerNote = null;
+    }
   }
 
   setSnapDivision(event: Event): void {

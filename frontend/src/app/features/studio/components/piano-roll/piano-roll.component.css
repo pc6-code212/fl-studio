@@ -162,6 +162,9 @@
   position: sticky;
   left: 0;
   z-index: 1;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
 }
 
 .key.black {

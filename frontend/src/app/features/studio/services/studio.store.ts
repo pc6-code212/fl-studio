@@ -61,6 +61,10 @@ export class StudioStore implements OnDestroy {
   readonly activeBrowserTab = signal<BrowserTab>('packs');
   readonly keyboardPiano = signal(true);
   readonly pressedNotes = signal<string[]>([]);
+  readonly mousePressedNotes = signal<string[]>([]);
+  readonly activeNotes = computed(() =>
+    Array.from(new Set([...this.pressedNotes(), ...this.mousePressedNotes()]))
+  );
 
   readonly pianoKeyMap: Record<string, string> = {
     z: 'C4', s: 'C#4', x: 'D4', d: 'D#4', c: 'E4', v: 'F4', g: 'F#4', b: 'G4',
@@ -384,6 +388,20 @@ export class StudioStore implements OnDestroy {
     if (channel) {
       this.engine.playChannelNote(channel.name, channel.volume, label);
     }
+  }
+
+  pressNote(label: string): void {
+    this.mousePressedNotes.update(notes =>
+      notes.includes(label) ? notes : [...notes, label]
+    );
+    const channel = this.selected();
+    if (channel) {
+      this.engine.playChannelNote(channel.name, channel.volume, label);
+    }
+  }
+
+  releaseNote(label: string): void {
+    this.mousePressedNotes.update(notes => notes.filter(note => note !== label));
   }
 
   releaseKeyboardNote(key: string): void {

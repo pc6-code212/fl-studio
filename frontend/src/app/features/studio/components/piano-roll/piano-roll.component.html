@@ -28,7 +28,12 @@
   <div class="piano-body" #body>
     @for (row of rows(); track row.label; let rowIndex = $index) {
       <div class="piano-row" [attr.data-note]="row.label" [class.pressed]="isPressed(row.label)">
-        <div class="key" [class.black]="row.black" [class.pressed]="isPressed(row.label)">{{ row.label }}</div>
+        <div
+          class="key"
+          [class.black]="row.black"
+          [class.pressed]="isPressed(row.label)"
+          (pointerdown)="onKeyPointerDown($event, row.label)"
+          (pointerenter)="onKeyPointerEnter($event, row.label)">{{ row.label }}</div>
         <div class="note-lane">
           @for (s of steps(); track s) {
             @if (isCovered(rowIndex, s)) {
