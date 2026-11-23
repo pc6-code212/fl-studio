@@ -972,26 +972,10 @@ export class StudioStore implements OnDestroy {
     this.playlistBars.update(bars => bars + count);
   }
 
-  extendPianoRollBars(count = 4): void {
-    const oldTotal = this.pianoRollTotalSteps();
+  extendPianoRollBars(count = 8): void {
+    // Grow lazily: note arrays expand on their own when a note is written past
+    // their end, so extending the timeline must not rebuild every pattern.
     this.pianoRollBars.update(bars => bars + count);
-    const newTotal = this.pianoRollTotalSteps();
-    if (newTotal <= oldTotal) {
-      return;
-    }
-    this.patterns.update(list =>
-      list.map(pattern => ({
-        ...pattern,
-        channels: pattern.channels.map(channel => ({
-          ...channel,
-          notes: channel.notes.map(row => ({
-            ...row,
-            notes: [...row.notes, ...Array(newTotal - oldTotal).fill(false)],
-            lengths: [...row.lengths, ...Array(newTotal - oldTotal).fill(1)]
-          }))
-        }))
-      }))
-    );
   }
 
   private createPlaylistClips(): PlaylistClip[] {

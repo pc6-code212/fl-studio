@@ -25,11 +25,11 @@
     <span class="tool-hint">Drag note edges to resize &middot; magnet off = free</span>
   </div>
 
-  <div class="piano-hscroll" #hscroll (scroll)="onHorizontalScroll($event)">
+  <div class="piano-hscroll" #hscroll>
     <div class="hscroll-spacer" [style.width.px]="contentWidth()"></div>
   </div>
 
-  <div class="piano-body" #body (scroll)="onBodyScroll($event)">
+  <div class="piano-body" #body>
     <div class="pr-ruler">
       <div class="key-spacer"></div>
       <div class="ruler-lane" [style.width.px]="laneWidth()">
@@ -48,16 +48,12 @@
           [class.pressed]="isPressed(row.label)"
           (pointerdown)="onKeyPointerDown($event, row.label)"
           (pointerenter)="onKeyPointerEnter($event, row.label)">{{ row.label }}</div>
-        <div
-          class="note-lane"
-          [style.width.px]="laneWidth()"
-          [style.--cols]="steps().length">
-          @for (s of steps(); track s) {
-            @if (isCovered(rowIndex, s)) {
-              <span class="note-spacer"></span>
-            } @else {
+        <div class="note-lane" [style.width.px]="laneWidth()">
+          @for (s of visibleSteps(); track s) {
+            @if (!isCovered(rowIndex, s)) {
               <button
                 class="note-cell"
+                [style.left.px]="s * stepWidth"
                 [class.black]="row.black"
                 [class.beat]="s % snapSteps() === 0"
                 [class.bar-edge]="s % stepsPerBar() === 0"

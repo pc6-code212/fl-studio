@@ -4,8 +4,11 @@ import {
   Component,
   ElementRef,
   HostListener,
+  NgZone,
+  OnDestroy,
   ViewChild,
   computed,
+  inject,
   input,
   output,
   signal
@@ -32,7 +35,7 @@ export interface NoteResizeEvent {
   styleUrl: './piano-roll.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class PianoRollComponent implements AfterViewInit {
+export class PianoRollComponent implements AfterViewInit, OnDestroy {
   readonly rows = input.required<PianoRow[]>();
   readonly steps = input.required<number[]>();
   readonly stepsPerBar = input<number>(16);
@@ -57,17 +60,62 @@ export class PianoRollComponent implements AfterViewInit {
   @ViewChild('body') private body?: ElementRef<HTMLElement>;
   @ViewChild('hscroll') private hscrollRef?: ElementRef<HTMLElement>;
 
+  private readonly zone = inject(NgZone);
   private readonly rowHeight = 22;
+  private readonly overscanSteps = 8;
+  private readonly windowChunk = 8;
   private activePointerNote: string | null = null;
   private lastExtend = 0;
+  private resizeObserver?: ResizeObserver;
 
   readonly cellWidth = 18;
   readonly cellGap = 3;
+  readonly stepWidth = this.cellWidth + this.cellGap;
   readonly keyWidth = 45;
   readonly laneWidth = computed(
-    () => this.steps().length * (this.cellWidth + this.cellGap) - this.cellGap
+    () => this.steps().length * this.stepWidth - this.cellGap
   );
   readonly contentWidth = computed(() => this.keyWidth + this.laneWidth());
+
+  // Only the columns near the viewport are rendered, so scrolling further and
+  // further right does not grow the DOM without bound.
+  readonly visibleStart = signal(0);
+  readonly visibleEnd = signal(Number.MAX_SAFE_INTEGER);
+  readonly visibleSteps = computed(() => {
+    const steps = this.steps();
+    const start = Math.max(0, Math.min(this.visibleStart(), steps.length));
+    const end = Math.max(start, Math.min(this.visibleEnd(), steps.length));
+    return steps.slice(start, end);
+  });
+
+  readonly coveredCells = computed(() =>
+    this.rows().map(row => {
+      const covered = new Array<boolean>(this.steps().length).fill(false);
+      for (let i = 0; i < row.notes.length; i++) {
+        if (!row.notes[i]) {
+          continue;
+        }
+        const length = row.lengths[i] ?? 1;
+        const end = Math.min(covered.length, Math.ceil(i + length));
+        for (let step = i + 1; step < end; step++) {
+          covered[step] = true;
+        }
+      }
+      return covered;
+    })
+  );
+
+  readonly noteBlocks = computed(() =>
+    this.rows().map(row => {
+      const blocks: { start: number; length: number }[] = [];
+      for (let step = 0; step < row.notes.length; step++) {
+        if (row.notes[step]) {
+          blocks.push({ start: step, length: row.lengths[step] ?? 1 });
+        }
+      }
+      return blocks;
+    })
+  );
   readonly barIndexes = computed(() => {
     const perBar = Math.max(1, this.stepsPerBar());
     return Array.from(
@@ -84,7 +132,28 @@ export class PianoRollComponent implements AfterViewInit {
   readonly selectedNote = signal<{ row: number; step: number } | null>(null);
 
   ngAfterViewInit(): void {
-    setTimeout(() => this.centerOnNote('C5'), 50);
+    const body = this.body?.nativeElement;
+    const hscroll = this.hscrollRef?.nativeElement;
+    this.zone.runOutsideAngular(() => {
+      body?.addEventListener('scroll', this.handleBodyScroll, { passive: true });
+      hscroll?.addEventListener('scroll', this.handleHScroll, { passive: true });
+      window.addEventListener('resize', this.handleResize);
+      if (body && typeof ResizeObserver !== 'undefined') {
+        this.resizeObserver = new ResizeObserver(() => this.updateVisibleWindow());
+        this.resizeObserver.observe(body);
+      }
+    });
+    setTimeout(() => {
+      this.centerOnNote('C5');
+      this.updateVisibleWindow(true);
+    }, 50);
+  }
+
+  ngOnDestroy(): void {
+    this.body?.nativeElement.removeEventListener('scroll', this.handleBodyScroll);
+    this.hscrollRef?.nativeElement.removeEventListener('scroll', this.handleHScroll);
+    window.removeEventListener('resize', this.handleResize);
+    this.resizeObserver?.disconnect();
   }
 
   onHeaderDoubleClick(event: MouseEvent): void {
@@ -142,21 +211,26 @@ export class PianoRollComponent implements AfterViewInit {
     }
   }
 
-  onBodyScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    const hscroll = this.hscrollRef?.nativeElement;
-    if (hscroll && Math.abs(hscroll.scrollLeft - el.scrollLeft) > 1) {
-      hscroll.scrollLeft = el.scrollLeft;
-    }
-  }
-
-  onHorizontalScroll(event: Event): void {
-    const el = event.target as HTMLElement;
+  private readonly handleBodyScroll = (): void => {
     const body = this.body?.nativeElement;
-    if (body && Math.abs(body.scrollLeft - el.scrollLeft) > 1) {
+    const hscroll = this.hscrollRef?.nativeElement;
+    if (body && hscroll && Math.abs(hscroll.scrollLeft - body.scrollLeft) > 1) {
+      hscroll.scrollLeft = body.scrollLeft;
+    }
+    this.updateVisibleWindow();
+  };
+
+  private readonly handleHScroll = (): void => {
+    const el = this.hscrollRef?.nativeElement;
+    const body = this.body?.nativeElement;
+    if (el && body && Math.abs(body.scrollLeft - el.scrollLeft) > 1) {
       body.scrollLeft = el.scrollLeft;
     }
-    if (el.scrollWidth - el.clientWidth - el.scrollLeft > 240) {
+    this.updateVisibleWindow();
+    if (!el) {
+      return;
+    }
+    if (el.scrollWidth - el.clientWidth - el.scrollLeft > 320) {
       return;
     }
     const now = Date.now();
@@ -164,7 +238,31 @@ export class PianoRollComponent implements AfterViewInit {
       return;
     }
     this.lastExtend = now;
-    this.extendBars.emit();
+    this.zone.run(() => this.extendBars.emit());
+  };
+
+  private readonly handleResize = (): void => this.updateVisibleWindow();
+
+  private updateVisibleWindow(force = false): void {
+    const body = this.body?.nativeElement;
+    if (!body) {
+      return;
+    }
+    const total = this.steps().length;
+    const viewLeft = Math.max(0, body.scrollLeft - this.keyWidth);
+    const viewRight = Math.max(0, body.scrollLeft + body.clientWidth - this.keyWidth);
+    const chunk = this.windowChunk;
+    const start = Math.max(0, Math.floor(viewLeft / this.stepWidth) - this.overscanSteps);
+    const end = Math.min(total, Math.ceil(viewRight / this.stepWidth) + this.overscanSteps);
+    const chunkStart = Math.floor(start / chunk) * chunk;
+    const chunkEnd = Math.min(total, Math.ceil(end / chunk) * chunk + chunk);
+    if (!force && chunkStart === this.visibleStart() && chunkEnd === this.visibleEnd()) {
+      return;
+    }
+    this.zone.run(() => {
+      this.visibleStart.set(chunkStart);
+      this.visibleEnd.set(chunkEnd);
+    });
   }
 
   setSnapDivision(event: Event): void {
@@ -225,33 +323,11 @@ export class PianoRollComponent implements AfterViewInit {
   }
 
   notesInRow(rowIndex: number): { start: number; length: number }[] {
-    const row = this.rows()[rowIndex];
-    if (!row) {
-      return [];
-    }
-    const result: { start: number; length: number }[] = [];
-    for (let s = 0; s < this.steps().length; s++) {
-      if (row.notes[s]) {
-        result.push({ start: s, length: row.lengths[s] ?? 1 });
-      }
-    }
-    return result;
+    return this.noteBlocks()[rowIndex] ?? [];
   }
 
   isCovered(rowIndex: number, step: number): boolean {
-    const row = this.rows()[rowIndex];
-    if (!row || row.notes[step]) {
-      return false;
-    }
-    for (let i = 0; i < step; i++) {
-      if (row.notes[i]) {
-        const length = row.lengths[i] ?? 1;
-        if (i + length > step) {
-          return true;
-        }
-      }
-    }
-    return false;
+    return this.coveredCells()[rowIndex]?.[step] ?? false;
   }
 
   startNoteResize(
@@ -266,9 +342,7 @@ export class PianoRollComponent implements AfterViewInit {
     const originStart = start;
     const originLength = this.noteLength(rowIndex, start);
     const total = this.steps().length;
-    const lane = (event.currentTarget as HTMLElement).closest('.note-lane') as HTMLElement | null;
-    const cell = lane?.querySelector('.note-cell') as HTMLElement | null;
-    const stepPx = cell ? cell.getBoundingClientRect().width + 3 : 20;
+    const stepPx = this.stepWidth;
     const snapStep = this.snap() ? this.snapSteps() : 0;
     const snapValue = (value: number): number => {
       const clamped = Math.max(0, value);

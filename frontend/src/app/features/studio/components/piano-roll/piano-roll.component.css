@@ -175,15 +175,7 @@
 
 .note-lane {
   position: relative;
-  display: grid;
-  grid-template-columns: repeat(var(--cols, 16), 18px);
-  gap: 3px;
   height: 100%;
-}
-
-.note-spacer {
-  display: block;
-  min-height: 20px;
 }
 
 .note-block {
@@ -255,12 +247,15 @@
 }
 
 .note-cell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
   border: 1px solid #131417;
   border-radius: 2px;
   background: linear-gradient(180deg, #2c2f34, #232529);
   cursor: pointer;
   padding: 0;
-  min-height: 20px;
 }
 
 .note-cell.black {
