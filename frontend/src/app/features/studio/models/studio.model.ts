@@ -38,8 +38,15 @@ export interface PlaylistClip {
   start: number;
   length: number;
   pattern: number;
+  channelId: number;
   name: string;
   color: string;
+}
+
+export interface PlaylistClipNote {
+  row: number;
+  step: number;
+  length: number;
 }
 
 export interface LibraryNode {

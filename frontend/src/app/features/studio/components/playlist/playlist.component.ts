@@ -9,7 +9,11 @@ import {
   output,
   signal
 } from '@angular/core';
-import { PlaylistClip, PlaylistTrack } from '@features/studio/models/studio.model';
+import {
+  PlaylistClip,
+  PlaylistClipNote,
+  PlaylistTrack
+} from '@features/studio/models/studio.model';
 
 export interface PlaylistCellEvent {
   track: number;
@@ -23,6 +27,13 @@ export interface ClipResizeEvent {
   length: number;
 }
 
+interface ClipNoteBlock {
+  left: number;
+  width: number;
+  top: number;
+  height: number;
+}
+
 @Component({
   selector: 'app-playlist',
   standalone: true,
@@ -33,6 +44,7 @@ export interface ClipResizeEvent {
 export class PlaylistComponent {
   readonly tracks = input.required<PlaylistTrack[]>();
   readonly clips = input.required<PlaylistClip[]>();
+  readonly clipNotes = input<Record<number, PlaylistClipNote[]>>({});
   readonly bars = input.required<number>();
   readonly stepsPerBar = input.required<number>();
   readonly playhead = input.required<number>();
@@ -42,6 +54,7 @@ export class PlaylistComponent {
   readonly maximized = input<boolean>(false);
 
   readonly toggleClip = output<PlaylistCellEvent>();
+  readonly openClip = output<PlaylistClip>();
   readonly resizeClip = output<ClipResizeEvent>();
   readonly toggleMute = output<number>();
   readonly toggleSolo = output<number>();
@@ -67,6 +80,44 @@ export class PlaylistComponent {
   readonly barsArray = computed(() => Array.from({ length: this.bars() }, (_, i) => i));
   readonly laneWidth = computed(() => this.totalSteps() * this.cellWidth);
   readonly contentWidth = computed(() => this.headWidth + this.laneWidth());
+  readonly clipBlocks = computed<Record<number, ClipNoteBlock[]>>(() => {
+    const source = this.clipNotes();
+    const patternLength = Math.max(1, this.stepsPerBar());
+    const result: Record<number, ClipNoteBlock[]> = {};
+    for (const clip of this.clips()) {
+      const notes = source[clip.id] ?? [];
+      if (notes.length === 0) {
+        result[clip.id] = [];
+        continue;
+      }
+      let minRow = Infinity;
+      let maxRow = -Infinity;
+      for (const note of notes) {
+        minRow = Math.min(minRow, note.row);
+        maxRow = Math.max(maxRow, note.row);
+      }
+      const span = Math.max(1, maxRow - minRow + 1);
+      const blocks: ClipNoteBlock[] = [];
+      const repeats = Math.max(1, Math.ceil(clip.length / patternLength));
+      for (let repeat = 0; repeat < repeats; repeat++) {
+        for (const note of notes) {
+          const offset = repeat * patternLength + note.step;
+          if (offset >= clip.length) {
+            continue;
+          }
+          const length = Math.min(note.length, clip.length - offset);
+          blocks.push({
+            left: (offset / clip.length) * 100,
+            width: (length / clip.length) * 100,
+            top: ((note.row - minRow) / span) * 100,
+            height: 100 / span
+          });
+        }
+      }
+      result[clip.id] = blocks;
+    }
+    return result;
+  });
 
   onLaneClick(event: MouseEvent, trackId: number, active: boolean): void {
     const lane = event.currentTarget as HTMLElement;
@@ -117,6 +168,31 @@ export class PlaylistComponent {
 
   setSnapDivision(event: Event): void {
     this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 4);
+  }
+
+  onLaneContextMenu(event: MouseEvent, trackId: number): void {
+    if (event.ctrlKey) {
+      return;
+    }
+    event.preventDefault();
+    this.onLaneClick(event, trackId, false);
+  }
+
+  onClipContextMenu(event: MouseEvent, trackId: number, start: number): void {
+    if (event.ctrlKey) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.toggleClip.emit({ track: trackId, start, active: false });
+  }
+
+  onClipHandleContextMenu(event: MouseEvent): void {
+    if (event.ctrlKey) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
   }
 
   @HostListener('window:keydown', ['$event'])

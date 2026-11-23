@@ -73,6 +73,14 @@ export class ChannelRackComponent {
     return -135 + (value / 100) * 270;
   }
 
+  onStepContextMenu(event: MouseEvent, id: number, step: number): void {
+    if (event.ctrlKey) {
+      return;
+    }
+    event.preventDefault();
+    this.toggleStep.emit({ id, step, active: false });
+  }
+
   startPanDrag(event: PointerEvent, channel: Channel): void {
     this.startKnobDrag(event, channel.pan, value =>
       this.panChange.emit({ id: channel.id, pan: value })

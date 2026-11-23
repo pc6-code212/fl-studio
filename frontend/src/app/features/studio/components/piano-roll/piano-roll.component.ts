@@ -85,6 +85,31 @@ export class PianoRollComponent implements AfterViewInit {
     this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 4);
   }
 
+  onNoteContextMenu(event: MouseEvent, row: number, step: number): void {
+    if (event.ctrlKey) {
+      return;
+    }
+    event.preventDefault();
+    this.toggleNote.emit({ row, step, active: false });
+  }
+
+  onNoteBlockContextMenu(event: MouseEvent, row: number, step: number): void {
+    if (event.ctrlKey) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.toggleNote.emit({ row, step, active: false });
+  }
+
+  onHandleContextMenu(event: MouseEvent): void {
+    if (event.ctrlKey) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   @HostListener('window:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent): void {
     if (event.key !== 'Delete' && event.key !== 'Backspace') {

@@ -87,7 +87,7 @@
             [class.playing]="isPlaying() && s === currentStep()"
             [style.--ch-color]="ch.color"
             (click)="toggleStep.emit({ id: ch.id, step: s, active: true })"
-            (contextmenu)="toggleStep.emit({ id: ch.id, step: s, active: false }); $event.preventDefault()">
+            (contextmenu)="onStepContextMenu($event, ch.id, s)">
           </button>
         }
       </div>

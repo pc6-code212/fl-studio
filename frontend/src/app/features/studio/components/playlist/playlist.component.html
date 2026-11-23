@@ -56,7 +56,7 @@
             [style.width.px]="laneWidth()"
             [style.--cell-w.px]="cellWidth"
             (click)="onLaneClick($event, track.id, true)"
-            (contextmenu)="onLaneClick($event, track.id, false); $event.preventDefault()">
+            (contextmenu)="onLaneContextMenu($event, track.id)">
             @for (clip of clipsFor(track.id); track clip.id) {
               <button
                 class="clip"
@@ -65,20 +65,33 @@
                 [style.--clip-color]="clip.color"
                 [title]="clip.name"
                 (click)="selectedClip.set(clip.id); toggleClip.emit({ track: track.id, start: clip.start, active: true }); $event.stopPropagation()"
-                (contextmenu)="toggleClip.emit({ track: track.id, start: clip.start, active: false }); $event.preventDefault(); $event.stopPropagation()">
+                (dblclick)="openClip.emit(clip)"
+                (contextmenu)="onClipContextMenu($event, track.id, clip.start)">
+                <span class="clip-notes" aria-hidden="true">
+                  @for (block of clipBlocks()[clip.id]; track $index) {
+                    <span
+                      class="clip-note"
+                      [style.left.%]="block.left"
+                      [style.width.%]="block.width"
+                      [style.top.%]="block.top"
+                      [style.height.%]="block.height"></span>
+                  }
+                </span>
                 <span class="clip-name">{{ clip.name }}</span>
                 <span
                   class="clip-handle left"
                   title="Drag to resize"
                   (pointerdown)="startClipResize($event, clip, 'left')"
                   (click)="$event.stopPropagation()"
-                  (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
+                  (dblclick)="$event.stopPropagation()"
+                  (contextmenu)="onClipHandleContextMenu($event)"></span>
                 <span
                   class="clip-handle right"
                   title="Drag to resize"
                   (pointerdown)="startClipResize($event, clip, 'right')"
                   (click)="$event.stopPropagation()"
-                  (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
+                  (dblclick)="$event.stopPropagation()"
+                  (contextmenu)="onClipHandleContextMenu($event)"></span>
               </button>
             }
 

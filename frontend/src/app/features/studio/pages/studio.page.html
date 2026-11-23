@@ -141,6 +141,7 @@
         <app-playlist
           [tracks]="store.playlistTracks()"
           [clips]="store.playlistClips()"
+          [clipNotes]="store.playlistClipNotes()"
           [bars]="store.playlistBars()"
           [stepsPerBar]="store.stepsPerBar"
           [playhead]="store.playlistStep()"
@@ -149,6 +150,7 @@
           [collapsed]="store.panels().playlist.collapsed"
           [maximized]="store.panels().playlist.maximized"
           (toggleClip)="store.setPlaylistClip($event.track, $event.start, $event.active)"
+          (openClip)="store.openClipInPianoRoll($event)"
           (resizeClip)="store.resizePlaylistClip($event.id, $event.start, $event.length)"
           (toggleMute)="store.togglePlaylistMute($event)"
           (toggleSolo)="store.togglePlaylistSolo($event)"

@@ -41,7 +41,7 @@
                 [class.on]="row.notes[s]"
                 [class.playing]="isPlaying() && s === currentStep()"
                 (click)="selectedNote.set({ row: rowIndex, step: s }); toggleNote.emit({ row: rowIndex, step: s, active: true })"
-                (contextmenu)="toggleNote.emit({ row: rowIndex, step: s, active: false }); $event.preventDefault()"></button>
+                (contextmenu)="onNoteContextMenu($event, rowIndex, s)"></button>
             }
           }
           @for (note of notesInRow(rowIndex); track note.start) {
@@ -50,19 +50,19 @@
               [style.left.%]="note.start / steps().length * 100"
               [style.width.%]="note.length / steps().length * 100"
               (click)="selectedNote.set({ row: rowIndex, step: note.start }); $event.stopPropagation()"
-              (contextmenu)="toggleNote.emit({ row: rowIndex, step: note.start, active: false }); $event.preventDefault(); $event.stopPropagation()">
+              (contextmenu)="onNoteBlockContextMenu($event, rowIndex, note.start)">
               <span
                 class="note-handle left"
                 title="Drag to resize"
                 (pointerdown)="startNoteResize($event, rowIndex, note.start, 'left')"
                 (click)="$event.stopPropagation()"
-                (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
+                (contextmenu)="onHandleContextMenu($event)"></span>
               <span
                 class="note-handle right"
                 title="Drag to resize"
                 (pointerdown)="startNoteResize($event, rowIndex, note.start, 'right')"
                 (click)="$event.stopPropagation()"
-                (contextmenu)="$event.preventDefault(); $event.stopPropagation()"></span>
+                (contextmenu)="onHandleContextMenu($event)"></span>
             </div>
           }
         </div>

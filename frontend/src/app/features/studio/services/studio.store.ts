@@ -14,6 +14,7 @@ import {
   Pattern,
   PianoRow,
   PlaylistClip,
+  PlaylistClipNote,
   PlaylistTrack
 } from '../models/studio.model';
 
@@ -83,6 +84,26 @@ export class StudioStore implements OnDestroy {
   readonly playlistTracks = signal<PlaylistTrack[]>(this.createPlaylistTracks());
   readonly playlistClips = signal<PlaylistClip[]>(this.createPlaylistClips());
   readonly playlistStep = signal(-1);
+  readonly playlistClipNotes = computed<Record<number, PlaylistClipNote[]>>(() => {
+    const result: Record<number, PlaylistClipNote[]> = {};
+    for (const clip of this.playlistClips()) {
+      const channel = this.resolveClipChannel(clip);
+      if (!channel) {
+        result[clip.id] = [];
+        continue;
+      }
+      const notes: PlaylistClipNote[] = [];
+      channel.notes.forEach((row, rowIndex) => {
+        for (let step = 0; step < this.stepCount; step++) {
+          if (row.notes[step]) {
+            notes.push({ row: rowIndex, step, length: row.lengths[step] ?? 1 });
+          }
+        }
+      });
+      result[clip.id] = notes;
+    }
+    return result;
+  });
 
   readonly library = signal<LibraryResponse | null>(null);
   readonly libraryLoading = signal(false);
@@ -145,6 +166,7 @@ export class StudioStore implements OnDestroy {
   private clock: ReturnType<typeof setInterval> | null = null;
   private previewAudio: HTMLAudioElement | null = null;
   private lastSnapshot: string | null = null;
+  private historyTimer: ReturnType<typeof setTimeout> | null = null;
   private isRestoring = false;
   private readonly undoStack = signal<string[]>([]);
   private readonly redoStack = signal<string[]>([]);
@@ -154,62 +176,97 @@ export class StudioStore implements OnDestroy {
   private readonly heldKeys = new Set<string>();
 
   constructor() {
-    effect(() => {
-      const snapshot = this.serializeHistoryState();
-      if (this.lastSnapshot === null) {
-        this.lastSnapshot = snapshot;
-        return;
-      }
-      if (this.isRestoring) {
-        this.lastSnapshot = snapshot;
-        return;
-      }
-      if (snapshot !== this.lastSnapshot) {
-        this.undoStack.update(stack => [...stack, this.lastSnapshot!]);
-        this.redoStack.set([]);
-        this.lastSnapshot = snapshot;
-      }
-    });
+    effect(
+      () => {
+        const snapshot = this.serializeHistoryState();
+        if (this.lastSnapshot === null) {
+          this.lastSnapshot = snapshot;
+          return;
+        }
+        if (this.isRestoring) {
+          this.lastSnapshot = snapshot;
+          return;
+        }
+        if (snapshot === this.lastSnapshot) {
+          return;
+        }
+        if (this.historyTimer !== null) {
+          clearTimeout(this.historyTimer);
+        }
+        this.historyTimer = setTimeout(() => {
+          this.historyTimer = null;
+          this.commitHistory();
+        }, 180);
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   ngOnDestroy(): void {
     this.stopClock();
     this.stopPreview();
+    if (this.historyTimer !== null) {
+      clearTimeout(this.historyTimer);
+      this.historyTimer = null;
+    }
   }
 
   readonly canUndo = computed(() => this.undoStack().length > 0);
   readonly canRedo = computed(() => this.redoStack().length > 0);
 
-  undo(): void {
-    if (this.undoStack().length === 0) {
+  private commitHistory(): void {
+    if (this.isRestoring || this.lastSnapshot === null) {
       return;
     }
-    const current = this.serializeHistoryState();
-    const previous = this.undoStack()[this.undoStack().length - 1];
-    this.undoStack.update(stack => stack.slice(0, -1));
-    this.redoStack.update(stack => [...stack, current]);
-    this.isRestoring = true;
-    this.restoreHistoryState(JSON.parse(previous));
-    setTimeout(() => {
-      this.isRestoring = false;
-      this.lastSnapshot = this.serializeHistoryState();
-    }, 0);
+    const snapshot = this.serializeHistoryState();
+    if (snapshot === this.lastSnapshot) {
+      return;
+    }
+    const previous = this.lastSnapshot;
+    this.lastSnapshot = snapshot;
+    this.undoStack.update(stack => [...stack, previous]);
+    this.redoStack.set([]);
+  }
+
+  private flushHistory(): void {
+    if (this.historyTimer !== null) {
+      clearTimeout(this.historyTimer);
+      this.historyTimer = null;
+    }
+    this.commitHistory();
+  }
+
+  undo(): void {
+    this.flushHistory();
+    const stack = this.undoStack();
+    if (stack.length === 0) {
+      return;
+    }
+    const previous = stack[stack.length - 1];
+    this.undoStack.update(items => items.slice(0, -1));
+    this.redoStack.update(items => [...items, this.serializeHistoryState()]);
+    this.applyHistoryState(previous);
   }
 
   redo(): void {
-    if (this.redoStack().length === 0) {
+    this.flushHistory();
+    const stack = this.redoStack();
+    if (stack.length === 0) {
       return;
     }
-    const current = this.serializeHistoryState();
-    const next = this.redoStack()[this.redoStack().length - 1];
-    this.redoStack.update(stack => stack.slice(0, -1));
-    this.undoStack.update(stack => [...stack, current]);
+    const next = stack[stack.length - 1];
+    this.redoStack.update(items => items.slice(0, -1));
+    this.undoStack.update(items => [...items, this.serializeHistoryState()]);
+    this.applyHistoryState(next);
+  }
+
+  private applyHistoryState(snapshot: string): void {
     this.isRestoring = true;
-    this.restoreHistoryState(JSON.parse(next));
-    setTimeout(() => {
+    this.restoreHistoryState(JSON.parse(snapshot));
+    this.lastSnapshot = this.serializeHistoryState();
+    queueMicrotask(() => {
       this.isRestoring = false;
-      this.lastSnapshot = this.serializeHistoryState();
-    }, 0);
+    });
   }
 
   private serializeHistoryState(): string {
@@ -217,6 +274,7 @@ export class StudioStore implements OnDestroy {
       bpm: this.bpm(),
       swing: this.swing(),
       masterVolume: this.masterVolume(),
+      songMode: this.songMode(),
       selectedChannel: this.selectedChannel(),
       patternNumber: this.patternNumber(),
       keyboardPiano: this.keyboardPiano(),
@@ -232,6 +290,7 @@ export class StudioStore implements OnDestroy {
     this.swing.set(state.swing);
     this.masterVolume.set(state.masterVolume);
     this.engine.setMasterVolume(state.masterVolume);
+    this.songMode.set(!!state.songMode);
     this.selectedChannel.set(state.selectedChannel);
     this.patternNumber.set(state.patternNumber);
     this.keyboardPiano.set(state.keyboardPiano);
@@ -352,6 +411,10 @@ export class StudioStore implements OnDestroy {
       this.closePanel(id);
       return;
     }
+    this.openPanel(id);
+  }
+
+  private openPanel(id: PanelId): void {
     const center = this.panels()[this.centerPanel()];
     const centerVisible = center.open && !center.collapsed;
     const floating = this.centerPanel() !== id && centerVisible;
@@ -636,6 +699,16 @@ export class StudioStore implements OnDestroy {
     this.frontPanel.set('pianoRoll');
   }
 
+  openClipInPianoRoll(clip: PlaylistClip): void {
+    const pattern = this.patterns()[clip.pattern - 1];
+    if (!pattern) {
+      return;
+    }
+    const index = pattern.channels.findIndex(channel => channel.id === clip.channelId);
+    this.setPattern(clip.pattern);
+    this.openInPianoRoll(index >= 0 ? index : 0);
+  }
+
   setPlaylistClip(trackId: number, start: number, active: boolean): void {
     const barStart = Math.floor(start / this.stepsPerBar) * this.stepsPerBar;
     const existing = this.playlistClips().find(
@@ -652,6 +725,7 @@ export class StudioStore implements OnDestroy {
     }
     const track = this.playlistTracks().find(item => item.id === trackId);
     const pattern = this.patternNumber();
+    const channel = this.channelForTrack(trackId);
     this.playlistClips.update(list => [
       ...list,
       {
@@ -660,8 +734,9 @@ export class StudioStore implements OnDestroy {
         start: barStart,
         length: this.stepsPerBar,
         pattern,
+        channelId: channel?.id ?? 0,
         name: this.patterns()[pattern - 1]?.name ?? `Pattern ${pattern}`,
-        color: track?.color ?? '#f5a623'
+        color: channel?.color ?? track?.color ?? '#f5a623'
       }
     ]);
   }
@@ -738,6 +813,22 @@ export class StudioStore implements OnDestroy {
       this.previewAudio.pause();
       this.previewAudio = null;
     }
+  }
+
+  private resolveClipChannel(clip: PlaylistClip): Channel | undefined {
+    const pattern = this.patterns()[clip.pattern - 1];
+    if (!pattern) {
+      return undefined;
+    }
+    return (
+      pattern.channels.find(channel => channel.id === clip.channelId) ??
+      pattern.channels[0]
+    );
+  }
+
+  private channelForTrack(trackId: number): Channel | undefined {
+    const channels = this.channels();
+    return channels[trackId] ?? channels[this.selectedChannel()] ?? channels[0];
   }
 
   private updateChannel(id: number, patch: Partial<Channel>): void {
@@ -864,14 +955,20 @@ export class StudioStore implements OnDestroy {
       pattern: number
     ): PlaylistClip => {
       const track = tracks[trackIndex];
+      const channels = this.patterns()[pattern - 1]?.channels ?? [];
+      const channel =
+        channels.find(item => item.id === track.id) ??
+        channels[track.id % channels.length] ??
+        channels[0];
       return {
         id,
         track: track.id,
         start: startBar * this.stepsPerBar,
         length: bars * this.stepsPerBar,
         pattern,
+        channelId: channel?.id ?? 0,
         name: this.patternNames[(pattern - 1) % this.patternNames.length],
-        color: track.color
+        color: channel?.color ?? track.color
       };
     };
 
@@ -951,14 +1048,7 @@ export class StudioStore implements OnDestroy {
       if (!track || track.muted || (anySolo && !track.solo)) {
         continue;
       }
-      const pattern = this.patterns()[clip.pattern - 1];
-      if (!pattern) {
-        continue;
-      }
-      const channel =
-        pattern.channels.find(item => item.id === track.id) ??
-        pattern.channels[track.id % pattern.channels.length] ??
-        pattern.channels[0];
+      const channel = this.resolveClipChannel(clip);
       if (!channel || channel.muted) {
         continue;
       }
