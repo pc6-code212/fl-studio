@@ -67,6 +67,7 @@ export class PlaylistComponent {
 
   readonly cellWidth = 18;
   readonly headWidth = 168;
+  private readonly octaveRows = 12;
 
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
@@ -96,7 +97,7 @@ export class PlaylistComponent {
         minRow = Math.min(minRow, note.row);
         maxRow = Math.max(maxRow, note.row);
       }
-      const span = Math.max(1, maxRow - minRow + 1);
+      const span = Math.max(this.octaveRows, maxRow - minRow + 1);
       const blocks: ClipNoteBlock[] = [];
       const repeats = Math.max(1, Math.ceil(clip.length / patternLength));
       for (let repeat = 0; repeat < repeats; repeat++) {
