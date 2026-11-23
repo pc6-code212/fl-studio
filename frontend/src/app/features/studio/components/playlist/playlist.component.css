@@ -267,8 +267,8 @@
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.07) 0 1px,
-      transparent 1px calc(var(--cell-w, 18px) * 4)
+      rgba(255, 255, 255, 0.09) 0 1px,
+      transparent 1px var(--snap-w, 72px)
     );
 }
 

@@ -59,7 +59,9 @@ export class PianoRollComponent implements AfterViewInit {
 
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
-  readonly snapSteps = computed(() => 4 / this.snapDivision());
+  readonly snapSteps = computed(() =>
+    Math.max(1, Math.round(this.steps().length / this.snapDivision()))
+  );
   readonly selectedNote = signal<{ row: number; step: number } | null>(null);
 
   ngAfterViewInit(): void {
@@ -223,21 +225,24 @@ export class PianoRollComponent implements AfterViewInit {
     const lane = (event.currentTarget as HTMLElement).closest('.note-lane') as HTMLElement | null;
     const cell = lane?.querySelector('.note-cell') as HTMLElement | null;
     const stepPx = cell ? cell.getBoundingClientRect().width + 3 : 20;
+    const snapStep = this.snap() ? this.snapSteps() : 0;
+    const snapValue = (value: number): number => {
+      const clamped = Math.max(0, value);
+      return snapStep > 0
+        ? Math.round(clamped / snapStep) * snapStep
+        : Math.round(clamped * 100) / 100;
+    };
     const move = (moveEvent: PointerEvent) => {
-      let delta = (moveEvent.clientX - startX) / stepPx;
-      if (this.snap()) {
-        const step = this.snapSteps();
-        delta = Math.round(delta / step) * step;
-      } else {
-        delta = Math.round(delta * 100) / 100;
-      }
+      const delta = (moveEvent.clientX - startX) / stepPx;
       let newStart = originStart;
       let length = originLength;
       if (side === 'right') {
-        length = Math.max(0.25, Math.min(total - originStart, originLength + delta));
+        const end = snapValue(originStart + originLength + delta);
+        length = Math.max(0.25, Math.min(total - originStart, end - originStart));
       } else {
-        newStart = Math.max(0, Math.min(originStart + originLength - 0.25, originStart + delta));
-        length = originLength + (originStart - newStart);
+        const end = originStart + originLength;
+        newStart = Math.max(0, Math.min(end - 0.25, snapValue(originStart + delta)));
+        length = end - newStart;
       }
       this.resizeNote.emit({ row: rowIndex, oldStart: originStart, start: newStart, length });
     };

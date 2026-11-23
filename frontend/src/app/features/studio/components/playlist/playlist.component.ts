@@ -71,7 +71,9 @@ export class PlaylistComponent {
 
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
-  readonly snapSteps = computed(() => 4 / this.snapDivision());
+  readonly snapSteps = computed(() =>
+    Math.max(1, Math.round(this.stepsPerBar() / this.snapDivision()))
+  );
   readonly selectedClip = signal<number | null>(null);
 
   @ViewChild('body') private bodyRef?: ElementRef<HTMLElement>;
@@ -232,21 +234,24 @@ export class PlaylistComponent {
     const originStart = clip.start;
     const originLength = clip.length;
     const total = this.totalSteps();
+    const snapStep = this.snap() ? this.snapSteps() : 0;
+    const snapValue = (value: number): number => {
+      const clamped = Math.max(0, value);
+      return snapStep > 0
+        ? Math.round(clamped / snapStep) * snapStep
+        : Math.round(clamped * 100) / 100;
+    };
     const move = (moveEvent: PointerEvent) => {
-      let delta = (moveEvent.clientX - startX) / this.cellWidth;
-      if (this.snap()) {
-        const step = this.snapSteps();
-        delta = Math.round(delta / step) * step;
-      } else {
-        delta = Math.round(delta * 100) / 100;
-      }
+      const delta = (moveEvent.clientX - startX) / this.cellWidth;
       let start = originStart;
       let length = originLength;
       if (side === 'right') {
-        length = Math.max(0.25, Math.min(total - originStart, originLength + delta));
+        const end = snapValue(originStart + originLength + delta);
+        length = Math.max(0.25, Math.min(total - originStart, end - originStart));
       } else {
-        start = Math.max(0, Math.min(originStart + originLength - 0.25, originStart + delta));
-        length = originLength + (originStart - start);
+        const end = originStart + originLength;
+        start = Math.max(0, Math.min(end - 0.25, snapValue(originStart + delta)));
+        length = end - start;
       }
       this.resizeClip.emit({ id: clip.id, start, length });
     };

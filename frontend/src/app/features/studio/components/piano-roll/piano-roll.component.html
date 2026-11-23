@@ -17,10 +17,10 @@
       [class.on]="snap()"
       title="Magnet: snap note edges to the grid"
       (click)="snap.set(!snap())">MAG</button>
-    <select class="snap-select" [disabled]="!snap()" (change)="setSnapDivision($event)" title="Snap division">
-      <option value="4" [selected]="snapDivision() === 4">1/4 beat</option>
-      <option value="8" [selected]="snapDivision() === 8">1/8 beat</option>
-      <option value="16" [selected]="snapDivision() === 16">1/16 beat</option>
+    <select class="snap-select" [disabled]="!snap()" (change)="setSnapDivision($event)" title="Magnet division">
+      <option value="4" [selected]="snapDivision() === 4">1/4</option>
+      <option value="8" [selected]="snapDivision() === 8">1/8</option>
+      <option value="16" [selected]="snapDivision() === 16">1/16</option>
     </select>
     <span class="tool-hint">Drag note edges to resize &middot; magnet off = free</span>
   </div>
@@ -42,7 +42,7 @@
               <button
                 class="note-cell"
                 [class.black]="row.black"
-                [class.beat]="s % 4 === 0"
+                [class.beat]="s % snapSteps() === 0"
                 [class.on]="row.notes[s]"
                 [class.playing]="isPlaying() && s === currentStep()"
                 (click)="selectedNote.set({ row: rowIndex, step: s }); toggleNote.emit({ row: rowIndex, step: s, active: true })"
