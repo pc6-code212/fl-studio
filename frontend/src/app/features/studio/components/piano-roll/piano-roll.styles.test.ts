@@ -43,6 +43,24 @@ test('note blocks keep a minimum width so handles never collapse', () => {
   assert.match(rule('.note-block'), /min-width\s*:\s*\d+px/);
 });
 
+test('beat lines exist and are lighter than the bar lines', () => {
+  const alpha = (body: string): number => {
+    const match = /rgba\(([^)]+)\)/.exec(body);
+    if (!match) {
+      return 1;
+    }
+    const parts = match[1].split(',');
+    return Number(parts[parts.length - 1]);
+  };
+  const bar = rule('.note-cell.bar-edge');
+  const beat = rule('.note-cell.beat-edge');
+  assert.match(beat, /border-left\s*:/);
+  assert.ok(
+    alpha(beat) < alpha(bar),
+    `beat line alpha ${alpha(beat)} must be lighter than bar alpha ${alpha(bar)}`
+  );
+});
+
 test('piano keys paint above note blocks so notes never cover them', () => {
   const keyZ = zIndex(rule('.key'));
   const noteBlockZ = zIndex(rule('.note-block'));

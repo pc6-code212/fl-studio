@@ -175,12 +175,15 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
       (_, index) => index
     );
   });
+  // One beat is a quarter of a bar; drawn as a lighter line than the bar edge.
+  readonly beatStep = computed(() => Math.max(1, Math.round(this.stepsPerBar() / 4)));
 
   readonly snap = signal(true);
   // The magnet only changes the drawn grid and the snap target used while
   // dragging; it never moves or resizes notes that already exist.
   readonly snapDivision = signal(16);
   readonly snapOptions = [
+    { value: 0, label: 'None' },
     { value: 1, label: 'Bar' },
     { value: 4, label: '1/4 bar · Beat' },
     { value: 8, label: '1/2 beat' },
@@ -188,8 +191,14 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     { value: 16, label: '1/4 beat' },
     { value: 24, label: '1/6 beat' }
   ] as const;
-  readonly snapSteps = computed(() =>
-    snapStepsFor(this.stepsPerBar(), this.snapDivision())
+  // Cell span for the drawn grid. "None" still shows a fine one-step grid you
+  // can click, but dragging/resizing is unsnapped (see activeSnapStep).
+  readonly snapSteps = computed(() => {
+    const division = this.snapDivision();
+    return division > 0 ? snapStepsFor(this.stepsPerBar(), division) : 1;
+  });
+  readonly activeSnapStep = computed(() =>
+    this.snap() && this.snapDivision() > 0 ? this.snapSteps() : 0
   );
   readonly gridCellWidth = computed(
     () => this.snapSteps() * this.stepWidth - this.cellGap
@@ -373,7 +382,8 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   }
 
   setSnapDivision(event: Event): void {
-    this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 16);
+    const value = Number((event.target as HTMLSelectElement).value);
+    this.snapDivision.set(Number.isFinite(value) && value >= 0 ? value : 16);
   }
 
   onNoteContextMenu(event: MouseEvent, row: number, step: number): void {
@@ -454,7 +464,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     const originLength = this.noteLength(rowIndex, start);
     const total = this.steps().length;
     const stepPx = this.stepWidth;
-    const snapStep = this.snap() ? this.snapSteps() : 0;
+    const snapStep = this.activeSnapStep();
     let currentStart = originStart;
     const move = (moveEvent: PointerEvent) => {
       const delta = (moveEvent.clientX - startX) / stepPx;
@@ -515,7 +525,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     const startY = event.clientY;
     const total = this.steps().length;
     const totalRows = this.rows().length;
-    const snapStep = this.snap() ? this.snapSteps() : 0;
+    const snapStep = this.activeSnapStep();
     const stepPx = this.stepWidth;
     const rowPx = this.rowHeight;
     let currentRow = rowIndex;
