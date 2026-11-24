@@ -14,7 +14,11 @@ import {
   signal
 } from '@angular/core';
 import { PianoRow } from '@features/studio/models/studio.model';
-import { computeColumnWindow, computeRowWindow } from './piano-roll.viewport';
+import {
+  computeColumnWindow,
+  computeGridCells,
+  computeRowWindow
+} from './piano-roll.viewport';
 import {
   movedRow,
   movedStep,
@@ -26,6 +30,7 @@ export interface NoteToggleEvent {
   row: number;
   step: number;
   active: boolean;
+  length?: number;
 }
 
 export interface NoteResizeEvent {
@@ -172,6 +177,17 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   readonly snapDivision = signal(16);
   readonly snapSteps = computed(() =>
     Math.max(1, Math.round(this.stepsPerBar() / this.snapDivision()))
+  );
+  readonly gridCellWidth = computed(
+    () => this.snapSteps() * this.stepWidth - this.cellGap
+  );
+  readonly gridCells = computed(() =>
+    computeGridCells(
+      this.visibleStart(),
+      this.visibleEnd(),
+      this.steps().length,
+      this.snapSteps()
+    )
   );
   readonly selectedNote = signal<{ row: number; step: number } | null>(null);
 

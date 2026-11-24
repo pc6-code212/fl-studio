@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   computeColumnWindow,
+  computeGridCells,
   computeRowWindow,
   type ColumnWindowInput,
   type RowWindowInput
@@ -57,6 +58,41 @@ test('rows follow vertical scrolling and round to chunk boundaries', () => {
 test('row window clamps to the total when scrolled to the bottom', () => {
   const window = computeRowWindow({ ...baseRows, scrollTop: 100000 });
   assert.deepEqual(window, { start: 128, end: 128 });
+});
+
+test('grid cells follow the magnet division: 1/4 shows four cells per bar', () => {
+  const cells = computeGridCells(0, 64, 64, 4);
+  assert.equal(cells.length, 16, '4 bars x 4 quarter cells');
+  assert.deepEqual(cells[0], { start: 0, length: 4 });
+  assert.deepEqual(cells[1], { start: 4, length: 4 });
+  assert.equal(cells.length / 4, 4, 'four cells per bar');
+});
+
+test('grid cells are per step at 1/16', () => {
+  const cells = computeGridCells(0, 64, 64, 1);
+  assert.equal(cells.length, 64);
+  assert.deepEqual(cells[5], { start: 5, length: 1 });
+  assert.equal(cells.length / 4, 16, 'sixteen cells per bar');
+});
+
+test('grid cells align to whole groups when the visible window starts mid-group', () => {
+  const cells = computeGridCells(5, 20, 64, 4);
+  assert.deepEqual(
+    cells.map(cell => cell.start),
+    [4, 8, 12, 16]
+  );
+});
+
+test('grid cells clamp the final partial group', () => {
+  assert.deepEqual(computeGridCells(0, 10, 10, 4), [
+    { start: 0, length: 4 },
+    { start: 4, length: 4 },
+    { start: 8, length: 2 }
+  ]);
+});
+
+test('empty content yields no grid cells', () => {
+  assert.deepEqual(computeGridCells(0, 0, 0, 4), []);
 });
 
 test('empty content yields an empty window', () => {

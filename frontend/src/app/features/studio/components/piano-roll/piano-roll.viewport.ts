@@ -53,6 +53,38 @@ export function computeRowWindow(input: RowWindowInput): WindowRange {
   return chunkRange(rawStart, rawEnd, input.total, input.chunk);
 }
 
+export interface GridCell {
+  start: number;
+  length: number;
+}
+
+/**
+ * Grid cells for the currently visible range. The cell size follows the magnet
+ * division, so 1/4 shows four cells per bar instead of sixteen step cells.
+ */
+export function computeGridCells(
+  visibleStart: number,
+  visibleEnd: number,
+  total: number,
+  snapStep: number
+): GridCell[] {
+  const span = Math.max(1, Math.round(snapStep));
+  const start = Math.max(0, Math.min(visibleStart, total));
+  const end = Math.max(start, Math.min(visibleEnd, total));
+  const first = Math.floor(start / span) * span;
+  const cells: GridCell[] = [];
+  if (total <= 0) {
+    return cells;
+  }
+  for (let step = first; step < end; step += span) {
+    if (step < 0) {
+      continue;
+    }
+    cells.push({ start: step, length: Math.min(span, total - step) });
+  }
+  return cells;
+}
+
 function chunkRange(
   rawStart: number,
   rawEnd: number,

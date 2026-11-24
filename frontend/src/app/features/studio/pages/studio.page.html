@@ -108,7 +108,7 @@
           [pressedNotes]="store.activeNotes()"
           [collapsed]="store.panels().pianoRoll.collapsed"
           [maximized]="store.panels().pianoRoll.maximized"
-          (toggleNote)="store.setNote($event.row, $event.step, $event.active)"
+          (toggleNote)="store.setNote($event.row, $event.step, $event.active, $event.length)"
           (resizeNote)="store.resizeNote($event.row, $event.oldStart, $event.start, $event.length)"
           (moveNote)="store.moveNote($event.fromRow, $event.fromStep, $event.toRow, $event.toStep)"
           (noteOn)="store.pressNote($event)"

@@ -50,19 +50,17 @@
           (pointerdown)="onKeyPointerDown($event, entry.row.label)"
           (pointerenter)="onKeyPointerEnter($event, entry.row.label)">{{ entry.row.label }}</div>
         <div class="note-lane" [style.width.px]="laneWidth()">
-          @for (s of visibleSteps(); track s) {
-            @if (!isCovered(entry.index, s)) {
-              <button
-                class="note-cell"
-                [style.left.px]="s * stepWidth"
-                [class.black]="entry.row.black"
-                [class.beat]="s % snapSteps() === 0"
-                [class.bar-edge]="s % stepsPerBar() === 0"
-                [class.on]="entry.row.notes[s]"
-                [class.playing]="isPlaying() && s === currentStep()"
-                (click)="selectedNote.set({ row: entry.index, step: s }); toggleNote.emit({ row: entry.index, step: s, active: true })"
-                (contextmenu)="onNoteContextMenu($event, entry.index, s)"></button>
-            }
+          @for (cell of gridCells(); track cell.start) {
+            <button
+              class="note-cell"
+              [style.left.px]="cell.start * stepWidth"
+              [style.width.px]="gridCellWidth()"
+              [class.black]="entry.row.black"
+              [class.bar-edge]="cell.start % stepsPerBar() === 0"
+              [class.on]="entry.row.notes[cell.start]"
+              [class.playing]="isPlaying() && cell.start === currentStep()"
+              (click)="selectedNote.set({ row: entry.index, step: cell.start }); toggleNote.emit({ row: entry.index, step: cell.start, active: true, length: cell.length })"
+              (contextmenu)="onNoteContextMenu($event, entry.index, cell.start)"></button>
           }
           @for (note of notesInRow(entry.index); track note.start) {
             <div

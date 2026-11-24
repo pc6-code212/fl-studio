@@ -626,7 +626,7 @@ export class StudioStore implements OnDestroy {
     }
   }
 
-  setNote(rowIndex: number, step: number, active: boolean): void {
+  setNote(rowIndex: number, step: number, active: boolean, length = 1): void {
     const channel = this.selected();
     const row = channel?.notes[rowIndex];
     if (!channel || !row) {
@@ -646,7 +646,7 @@ export class StudioStore implements OnDestroy {
       const lengths = item.lengths.slice();
       cells[step] = active;
       if (active) {
-        lengths[step] = Math.max(1, lengths[step] ?? 1);
+        lengths[step] = Math.max(1, Math.round(length));
       } else {
         lengths[step] = 1;
       }
