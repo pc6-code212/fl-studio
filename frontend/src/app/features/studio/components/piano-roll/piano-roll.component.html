@@ -69,7 +69,8 @@
               class="note-block"
               [style.left.%]="note.start / steps().length * 100"
               [style.width.%]="note.length / steps().length * 100"
-              (click)="selectedNote.set({ row: entry.index, step: note.start }); $event.stopPropagation()"
+              (pointerdown)="onNoteBlockPointerDown($event, entry.index, note.start)"
+              (click)="onNoteBlockClick($event, entry.index, note.start)"
               (contextmenu)="onNoteBlockContextMenu($event, entry.index, note.start)">
               <span
                 class="note-handle left"

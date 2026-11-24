@@ -110,6 +110,7 @@
           [maximized]="store.panels().pianoRoll.maximized"
           (toggleNote)="store.setNote($event.row, $event.step, $event.active)"
           (resizeNote)="store.resizeNote($event.row, $event.oldStart, $event.start, $event.length)"
+          (moveNote)="store.moveNote($event.fromRow, $event.fromStep, $event.toRow, $event.toStep)"
           (noteOn)="store.pressNote($event)"
           (noteOff)="store.releaseNote($event)"
           (extendBars)="store.extendPianoRollBars(8)"

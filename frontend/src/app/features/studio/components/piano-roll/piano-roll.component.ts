@@ -15,6 +15,12 @@ import {
 } from '@angular/core';
 import { PianoRow } from '@features/studio/models/studio.model';
 import { computeColumnWindow, computeRowWindow } from './piano-roll.viewport';
+import {
+  movedRow,
+  movedStep,
+  resizedLeftStart,
+  resizedRightLength
+} from './piano-roll.drag';
 
 export interface NoteToggleEvent {
   row: number;
@@ -27,6 +33,13 @@ export interface NoteResizeEvent {
   oldStart: number;
   start: number;
   length: number;
+}
+
+export interface NoteMoveEvent {
+  fromRow: number;
+  fromStep: number;
+  toRow: number;
+  toStep: number;
 }
 
 @Component({
@@ -49,6 +62,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
 
   readonly toggleNote = output<NoteToggleEvent>();
   readonly resizeNote = output<NoteResizeEvent>();
+  readonly moveNote = output<NoteMoveEvent>();
   readonly noteOn = output<string>();
   readonly noteOff = output<string>();
   readonly extendBars = output<void>();
@@ -69,6 +83,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   private readonly overscanRows = 6;
   private readonly rowChunk = 12;
   private activePointerNote: string | null = null;
+  private suppressClickUntil = 0;
   private lastExtend = 0;
   private resizeObserver?: ResizeObserver;
   private scrollRaf = 0;
@@ -153,7 +168,8 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   });
 
   readonly snap = signal(true);
-  readonly snapDivision = signal(4);
+  // 1/16 snaps to individual step cells so notes can be placed on every step.
+  readonly snapDivision = signal(16);
   readonly snapSteps = computed(() =>
     Math.max(1, Math.round(this.stepsPerBar() / this.snapDivision()))
   );
@@ -406,32 +422,108 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     const total = this.steps().length;
     const stepPx = this.stepWidth;
     const snapStep = this.snap() ? this.snapSteps() : 0;
-    const snapValue = (value: number): number => {
-      const clamped = Math.max(0, value);
-      return snapStep > 0
-        ? Math.round(clamped / snapStep) * snapStep
-        : Math.round(clamped * 100) / 100;
-    };
+    let currentStart = originStart;
     const move = (moveEvent: PointerEvent) => {
       const delta = (moveEvent.clientX - startX) / stepPx;
-      let newStart = originStart;
-      let length = originLength;
       if (side === 'right') {
-        const end = snapValue(originStart + originLength + delta);
-        length = Math.max(0.25, Math.min(total - originStart, end - originStart));
-      } else {
-        const end = originStart + originLength;
-        newStart = Math.max(0, Math.min(end - 0.25, snapValue(originStart + delta)));
-        length = end - newStart;
+        const length = resizedRightLength(originStart, originLength, delta, snapStep, total);
+        this.resizeNote.emit({
+          row: rowIndex,
+          oldStart: currentStart,
+          start: currentStart,
+          length
+        });
+        return;
       }
-      this.resizeNote.emit({ row: rowIndex, oldStart: originStart, start: newStart, length });
+      const newStart = resizedLeftStart(originStart, originLength, delta, snapStep);
+      this.resizeNote.emit({
+        row: rowIndex,
+        oldStart: currentStart,
+        start: newStart,
+        length: originStart + originLength - newStart
+      });
+      currentStart = newStart;
     };
     const stop = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+      this.suppressClickUntil = Date.now() + 300;
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+  }
+
+  onNoteBlockPointerDown(event: PointerEvent, rowIndex: number, step: number): void {
+    if (event.button !== 0) {
+      return;
+    }
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const offsetX = event.clientX - rect.left;
+    if (offsetX <= 7) {
+      this.startNoteResize(event, rowIndex, step, 'left');
+      return;
+    }
+    if (rect.width - offsetX <= 7) {
+      this.startNoteResize(event, rowIndex, step, 'right');
+      return;
+    }
+    this.startNoteMove(event, rowIndex, step);
+  }
+
+  startNoteMove(event: PointerEvent, rowIndex: number, step: number): void {
+    if (event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const total = this.steps().length;
+    const totalRows = this.rows().length;
+    const snapStep = this.snap() ? this.snapSteps() : 0;
+    const stepPx = this.stepWidth;
+    const rowPx = this.rowHeight;
+    let currentRow = rowIndex;
+    let currentStep = step;
+    let moved = false;
+    const move = (moveEvent: PointerEvent) => {
+      const nextStep = movedStep(step, (moveEvent.clientX - startX) / stepPx, snapStep, total);
+      const nextRow = movedRow(rowIndex, (moveEvent.clientY - startY) / rowPx, totalRows);
+      if (nextStep === currentStep && nextRow === currentRow) {
+        return;
+      }
+      this.moveNote.emit({
+        fromRow: currentRow,
+        fromStep: currentStep,
+        toRow: nextRow,
+        toStep: nextStep
+      });
+      currentRow = nextRow;
+      currentStep = nextStep;
+      moved = true;
+    };
+    const stop = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', stop);
+      if (moved) {
+        this.suppressClickUntil = Date.now() + 300;
+      }
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', stop);
+  }
+
+  onNoteBlockClick(event: MouseEvent, rowIndex: number, step: number): void {
+    event.stopPropagation();
+    if (Date.now() < this.suppressClickUntil) {
+      this.suppressClickUntil = 0;
+      return;
+    }
+    this.selectedNote.set({ row: rowIndex, step });
   }
 
   centerOnNote(label: string): void {

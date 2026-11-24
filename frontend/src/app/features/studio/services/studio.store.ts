@@ -3,6 +3,7 @@ import { AudioEngineService } from '@core/services/audio-engine.service';
 import { LibraryApiService, LibraryFolder } from '@core/services/library-api.service';
 import { clamp } from '@shared/utils/format';
 import { mapLibraryResponse } from '../mappers/library.mapper';
+import { applyNoteMove } from '../components/piano-roll/piano-roll.drag';
 import {
   BrowserSection,
   BrowserTab,
@@ -665,7 +666,7 @@ export class StudioStore implements OnDestroy {
     }
     const total = this.pianoRollTotalSteps();
     const newStart = clamp(Math.round(start), 0, total - 1);
-    const newLength = clamp(Number(length) || 1, 0.25, total - newStart);
+    const newLength = clamp(Number(length) || 1, 1, total - newStart);
     const notes = channel.notes.map((item, index) => {
       if (index !== rowIndex) {
         return item;
@@ -678,6 +679,21 @@ export class StudioStore implements OnDestroy {
       lengths[newStart] = Math.round(newLength * 100) / 100;
       return { ...item, notes: cells, lengths };
     });
+    this.updateChannel(channel.id, { notes, steps: this.syncSteps(notes) });
+  }
+
+  moveNote(fromRow: number, fromStep: number, toRow: number, toStep: number): void {
+    const channel = this.selected();
+    if (!channel) {
+      return;
+    }
+    const total = this.pianoRollTotalSteps();
+    const targetRow = clamp(Math.round(toRow), 0, channel.notes.length - 1);
+    const targetStep = clamp(Math.round(toStep), 0, total - 1);
+    const notes = applyNoteMove(channel.notes, fromRow, fromStep, targetRow, targetStep);
+    if (!notes) {
+      return;
+    }
     this.updateChannel(channel.id, { notes, steps: this.syncSteps(notes) });
   }
 
