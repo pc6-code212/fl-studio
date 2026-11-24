@@ -4,6 +4,7 @@ import {
   computeColumnWindow,
   computeGridCells,
   computeRowWindow,
+  snapStepsFor,
   type ColumnWindowInput,
   type RowWindowInput
 } from './piano-roll.viewport.ts';
@@ -89,6 +90,23 @@ test('grid cells clamp the final partial group', () => {
     { start: 4, length: 4 },
     { start: 8, length: 2 }
   ]);
+});
+
+test('every magnet option lands on a whole step at 48 steps per bar', () => {
+  const options = [1, 4, 8, 12, 16, 24];
+  const expected = [48, 12, 6, 4, 3, 2];
+  options.forEach((division, index) => {
+    const span = snapStepsFor(48, division);
+    assert.equal(span, expected[index], `division ${division}`);
+    assert.ok(Number.isInteger(span), `division ${division} must be a whole step`);
+  });
+});
+
+test('beat magnet draws twelve-step cells in a 48-step bar', () => {
+  const span = snapStepsFor(48, 4);
+  const cells = computeGridCells(0, 48, 48, span);
+  assert.equal(cells.length, 4, 'four beats per bar');
+  assert.deepEqual(cells[0], { start: 0, length: 12 });
 });
 
 test('empty content yields no grid cells', () => {

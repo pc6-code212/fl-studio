@@ -53,6 +53,13 @@ export function computeRowWindow(input: RowWindowInput): WindowRange {
   return chunkRange(rawStart, rawEnd, input.total, input.chunk);
 }
 
+/** How many steps one magnet cell spans. 1 = full bar, 4 = one beat (1/4 bar). */
+export function snapStepsFor(stepsPerBar: number, snapDivision: number): number {
+  const perBar = Math.max(1, stepsPerBar);
+  const division = Math.max(1, snapDivision);
+  return Math.max(1, Math.round(perBar / division));
+}
+
 export interface GridCell {
   start: number;
   length: number;

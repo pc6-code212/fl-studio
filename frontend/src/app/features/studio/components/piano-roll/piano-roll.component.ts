@@ -17,11 +17,13 @@ import { PianoRow } from '@features/studio/models/studio.model';
 import {
   computeColumnWindow,
   computeGridCells,
-  computeRowWindow
+  computeRowWindow,
+  snapStepsFor
 } from './piano-roll.viewport';
 import {
   movedRow,
   movedStep,
+  notePixelWidth,
   resizedLeftStart,
   resizedRightLength
 } from './piano-roll.drag';
@@ -93,7 +95,9 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   private resizeObserver?: ResizeObserver;
   private scrollRaf = 0;
 
-  readonly cellWidth = 18;
+  // 48 steps per bar: a 10px step keeps the bar about as wide as before while
+  // leaving the finest (1/6 beat = 2 step) magnet cell wide enough to grab.
+  readonly cellWidth = 7;
   readonly cellGap = 3;
   readonly stepWidth = this.cellWidth + this.cellGap;
   readonly keyWidth = 45;
@@ -173,10 +177,19 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   });
 
   readonly snap = signal(true);
-  // 1/16 snaps to individual step cells so notes can be placed on every step.
+  // The magnet only changes the drawn grid and the snap target used while
+  // dragging; it never moves or resizes notes that already exist.
   readonly snapDivision = signal(16);
+  readonly snapOptions = [
+    { value: 1, label: 'Bar' },
+    { value: 4, label: '1/4 bar · Beat' },
+    { value: 8, label: '1/2 beat' },
+    { value: 12, label: '1/3 beat' },
+    { value: 16, label: '1/4 beat' },
+    { value: 24, label: '1/6 beat' }
+  ] as const;
   readonly snapSteps = computed(() =>
-    Math.max(1, Math.round(this.stepsPerBar() / this.snapDivision()))
+    snapStepsFor(this.stepsPerBar(), this.snapDivision())
   );
   readonly gridCellWidth = computed(
     () => this.snapSteps() * this.stepWidth - this.cellGap
@@ -360,7 +373,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   }
 
   setSnapDivision(event: Event): void {
-    this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 4);
+    this.snapDivision.set(Number((event.target as HTMLSelectElement).value) || 16);
   }
 
   onNoteContextMenu(event: MouseEvent, row: number, step: number): void {
@@ -414,6 +427,10 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
 
   noteLength(rowIndex: number, step: number): number {
     return this.rows()[rowIndex]?.lengths[step] ?? 1;
+  }
+
+  noteWidth(length: number): number {
+    return notePixelWidth(length, this.stepWidth, this.cellGap);
   }
 
   notesInRow(rowIndex: number): { start: number; length: number }[] {

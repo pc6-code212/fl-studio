@@ -66,12 +66,22 @@ export class PlaylistComponent {
   readonly headerDrag = output<PointerEvent>();
   readonly closePanel = output<void>();
 
-  readonly cellWidth = 18;
+  // 6px per fine step keeps a bar about as wide as before now that a bar is split
+  // into 48 (stepsPerBar) pieces.
+  readonly cellWidth = 6;
   readonly headWidth = 168;
   private readonly octaveRows = 12;
 
   readonly snap = signal(true);
   readonly snapDivision = signal(4);
+  readonly snapOptions = [
+    { value: 1, label: 'Bar' },
+    { value: 4, label: '1/4 bar · Beat' },
+    { value: 8, label: '1/2 beat' },
+    { value: 12, label: '1/3 beat' },
+    { value: 16, label: '1/4 beat' },
+    { value: 24, label: '1/6 beat' }
+  ] as const;
   readonly snapSteps = computed(() =>
     Math.max(1, Math.round(this.stepsPerBar() / this.snapDivision()))
   );

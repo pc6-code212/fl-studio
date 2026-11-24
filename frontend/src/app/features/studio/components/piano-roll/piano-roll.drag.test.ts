@@ -5,6 +5,7 @@ import {
   MIN_NOTE_LENGTH,
   movedRow,
   movedStep,
+  notePixelWidth,
   resizedLeftStart,
   resizedRightLength,
   type NoteGridRow
@@ -60,6 +61,14 @@ function grid(...lengthsPerRow: number[]): NoteGridRow[] {
   }));
 }
 
+test('note pixel width lines up with the drawn grid cells', () => {
+  const stepWidth = 21;
+  const cellGap = 3;
+  assert.equal(notePixelWidth(1, stepWidth, cellGap), 18);
+  assert.equal(notePixelWidth(4, stepWidth, cellGap), 4 * stepWidth - cellGap);
+  assert.ok(notePixelWidth(0.5, stepWidth, cellGap) >= 18, 'never narrower than one cell');
+});
+
 test('applyNoteMove clears the source and preserves length at the target', () => {
   const rows = grid(2, 2);
   rows[0].notes[0] = true;
@@ -79,6 +88,23 @@ test('applyNoteMove ignores no-ops and missing notes', () => {
   assert.equal(applyNoteMove(rows, 0, 0, 0, 0), null);
   assert.equal(applyNoteMove(rows, 0, 1, 0, 0), null);
   assert.equal(applyNoteMove(rows, 5, 0, 0, 0), null);
+});
+
+test('moving a note never changes its length, whatever the magnet division', () => {
+  const rows = grid(4, 4);
+  rows[0].notes[0] = true;
+  // A 3-step length does not match any cell of a 1/4 (4-step) magnet.
+  rows[0].lengths[0] = 3;
+  const moved = applyNoteMove(rows, 0, 0, 1, 2);
+  assert.ok(moved);
+  assert.equal(moved[1].lengths[2], 3, 'length survives the move untouched');
+});
+
+test('dragging a resize handle aligns the edge to the current magnet division', () => {
+  // 1/16 magnet (snapStep 1): the raw end is honoured.
+  assert.equal(resizedRightLength(2, 3, 1, 1, 64), 4);
+  // 1/4 magnet (snapStep 4): the same drag snaps the end to the next 4-step boundary.
+  assert.equal(resizedRightLength(2, 3, 1, 4, 64), 6);
 });
 
 test('successive moves from the last position leave no trail', () => {

@@ -58,6 +58,15 @@ export function resizedLeftStart(
   return Math.min(Math.max(0, snapped), latestStart);
 }
 
+/** Pixel width of a note so it lines up exactly with the drawn grid cells. */
+export function notePixelWidth(
+  length: number,
+  stepWidth: number,
+  cellGap: number
+): number {
+  return Math.max(stepWidth - cellGap, length * stepWidth - cellGap);
+}
+
 export interface NoteGridRow {
   notes: boolean[];
   lengths: number[];

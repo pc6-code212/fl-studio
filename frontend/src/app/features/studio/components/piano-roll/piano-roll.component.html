@@ -18,9 +18,9 @@
       title="Magnet: snap note edges to the grid"
       (click)="snap.set(!snap())">MAG</button>
     <select class="snap-select" [disabled]="!snap()" (change)="setSnapDivision($event)" title="Magnet division">
-      <option value="4" [selected]="snapDivision() === 4">1/4</option>
-      <option value="8" [selected]="snapDivision() === 8">1/8</option>
-      <option value="16" [selected]="snapDivision() === 16">1/16</option>
+      @for (option of snapOptions; track option.value) {
+        <option [value]="option.value" [selected]="snapDivision() === option.value">{{ option.label }}</option>
+      }
     </select>
     <span class="tool-hint">Drag note edges to resize &middot; magnet off = free</span>
   </div>
@@ -65,8 +65,8 @@
           @for (note of notesInRow(entry.index); track note.start) {
             <div
               class="note-block"
-              [style.left.%]="note.start / steps().length * 100"
-              [style.width.%]="note.length / steps().length * 100"
+              [style.left.px]="note.start * stepWidth"
+              [style.width.px]="noteWidth(note.length)"
               (pointerdown)="onNoteBlockPointerDown($event, entry.index, note.start)"
               (click)="onNoteBlockClick($event, entry.index, note.start)"
               (contextmenu)="onNoteBlockContextMenu($event, entry.index, note.start)">

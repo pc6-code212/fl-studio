@@ -263,7 +263,7 @@
     repeating-linear-gradient(
       90deg,
       rgba(245, 166, 35, 0.32) 0 1px,
-      transparent 1px calc(var(--cell-w, 18px) * 16)
+      transparent 1px var(--bar-w, 288px)
     ),
     repeating-linear-gradient(
       90deg,

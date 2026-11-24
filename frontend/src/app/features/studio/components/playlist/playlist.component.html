@@ -18,9 +18,9 @@
       title="Magnet: snap clip edges to the grid"
       (click)="snap.set(!snap())">MAG</button>
     <select class="snap-select" [disabled]="!snap()" (change)="setSnapDivision($event)" title="Magnet division">
-      <option value="4" [selected]="snapDivision() === 4">1/4</option>
-      <option value="8" [selected]="snapDivision() === 8">1/8</option>
-      <option value="16" [selected]="snapDivision() === 16">1/16</option>
+      @for (option of snapOptions; track option.value) {
+        <option [value]="option.value" [selected]="snapDivision() === option.value">{{ option.label }}</option>
+      }
     </select>
     <span class="tool-hint">Drag clip edges to resize &middot; magnet off = free</span>
   </div>
@@ -55,6 +55,7 @@
             class="track-lane"
             [style.width.px]="laneWidth()"
             [style.--cell-w.px]="cellWidth"
+            [style.--bar-w.px]="cellWidth * stepsPerBar()"
             [style.--snap-w.px]="cellWidth * snapSteps()"
             (click)="onLaneClick($event, track.id, true)"
             (contextmenu)="onLaneContextMenu($event, track.id)">

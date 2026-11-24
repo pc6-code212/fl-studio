@@ -33,7 +33,10 @@ export class StudioStore implements OnDestroy {
 
   readonly stepCount = 16;
   readonly steps = Array.from({ length: this.stepCount }, (_, i) => i);
-  readonly stepsPerBar = 16;
+  // 48 steps per bar keeps every magnet division (bar, beat, 1/2, 1/3, 1/4 and
+  // 1/6 beat) on a whole step. The channel rack still shows 16 steps per bar.
+  readonly stepsPerBar = 48;
+  readonly stepsPerChannelStep = this.stepsPerBar / this.stepCount;
   readonly pianoRollBars = signal(4);
   readonly pianoRollTotalSteps = computed(() => this.pianoRollBars() * this.stepsPerBar);
   readonly pianoRollSteps = computed(() =>
@@ -62,9 +65,13 @@ export class StudioStore implements OnDestroy {
   readonly isRecording = signal(false);
   readonly songMode = signal(false);
   readonly currentStep = signal(-1);
-  readonly channelStep = computed(() =>
-    this.currentStep() < 0 ? -1 : this.currentStep() % this.stepCount
-  );
+  readonly channelStep = computed(() => {
+    const step = this.currentStep();
+    if (step < 0) {
+      return -1;
+    }
+    return Math.floor(step / this.stepsPerChannelStep) % this.stepCount;
+  });
   readonly selectedChannel = signal(0);
   readonly patternNumber = signal(1);
   readonly activeBrowserTab = signal<BrowserTab>('packs');
@@ -598,27 +605,39 @@ export class StudioStore implements OnDestroy {
     if (!channel) {
       return;
     }
+    // A channel-rack cell spans several fine piano-roll steps.
+    const span = this.stepsPerChannelStep;
+    const startStep = step * span;
     const notes = channel.notes.map(row => ({
       ...row,
       notes: row.notes.slice(),
       lengths: row.lengths.slice()
     }));
-    const hadNote = notes.some(row => row.notes[step]);
+    const hadNote = notes.some(row => {
+      for (let i = startStep; i < startStep + span; i++) {
+        if (row.notes[i]) {
+          return true;
+        }
+      }
+      return false;
+    });
     if (!active) {
       if (!hadNote) {
         return;
       }
       notes.forEach(row => {
-        row.notes[step] = false;
-        row.lengths[step] = 1;
+        for (let i = startStep; i < startStep + span; i++) {
+          row.notes[i] = false;
+          row.lengths[i] = 1;
+        }
       });
     } else {
       const c5 = notes.find(row => row.label === 'C5');
       if (!c5) {
         return;
       }
-      c5.notes[step] = true;
-      c5.lengths[step] = 1;
+      c5.notes[startStep] = true;
+      c5.lengths[startStep] = span;
     }
     this.updateChannel(id, { notes, steps: this.syncSteps(notes) });
     if (active) {
@@ -957,15 +976,27 @@ export class StudioStore implements OnDestroy {
     const rows = this.createPianoRows();
     const c5 = rows.find(row => row.label === 'C5');
     if (c5) {
-      activeSteps.forEach(step => (c5.notes[step] = true));
+      const span = this.stepsPerChannelStep;
+      activeSteps.forEach(step => {
+        const index = step * span;
+        c5.notes[index] = true;
+        c5.lengths[index] = span;
+      });
     }
     return rows;
   }
 
   private syncSteps(notes: PianoRow[]): boolean[] {
-    return Array.from({ length: this.stepCount }, (_, step) =>
-      notes.some(row => row.notes[step])
-    );
+    const span = this.stepsPerChannelStep;
+    return Array.from({ length: this.stepCount }, (_, step) => {
+      const start = step * span;
+      for (let i = start; i < start + span; i++) {
+        if (notes.some(row => row.notes[i])) {
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   private playChannelNote(channel: Channel, label: string): void {
@@ -1050,7 +1081,8 @@ export class StudioStore implements OnDestroy {
 
   private startClock(): void {
     this.stopClock();
-    const stepMs = 60000 / this.bpm() / 4;
+    const stepsPerBeat = this.stepsPerBar / 4;
+    const stepMs = 60000 / this.bpm() / stepsPerBeat;
     this.clock = setInterval(() => this.advanceStep(), stepMs);
   }
 
