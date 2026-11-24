@@ -260,6 +260,11 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     return this.pressedNotes().includes(label);
   }
 
+  // Only the natural C keys carry a label, like a real keyboard reference.
+  isCKey(label: string): boolean {
+    return /^C\d+$/.test(label);
+  }
+
   onKeyPointerDown(event: PointerEvent, label: string): void {
     if (event.button !== 0) {
       return;

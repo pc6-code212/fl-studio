@@ -46,9 +46,10 @@
         <div
           class="key"
           [class.black]="entry.row.black"
+          [class.c-key]="isCKey(entry.row.label)"
           [class.pressed]="isPressed(entry.row.label)"
           (pointerdown)="onKeyPointerDown($event, entry.row.label)"
-          (pointerenter)="onKeyPointerEnter($event, entry.row.label)">{{ entry.row.label }}</div>
+          (pointerenter)="onKeyPointerEnter($event, entry.row.label)">{{ isCKey(entry.row.label) ? entry.row.label : '' }}</div>
         <div class="note-lane" [style.width.px]="laneWidth()">
           @for (cell of gridCells(); track cell.start) {
             <button

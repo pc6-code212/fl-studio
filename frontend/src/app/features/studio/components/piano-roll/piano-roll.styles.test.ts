@@ -43,6 +43,13 @@ test('note blocks keep a minimum width so handles never collapse', () => {
   assert.match(rule('.note-block'), /min-width\s*:\s*\d+px/);
 });
 
+test('black keys are narrower dark caps over the white key bed', () => {
+  const cap = rule('.key.black::before');
+  const width = Number(/width\s*:\s*([\d.]+)%/.exec(cap)?.[1] ?? 100);
+  assert.ok(width < 100, `black key cap ${width}% must be narrower than the white key`);
+  assert.match(cap, /background\s*:/);
+});
+
 test('beat lines exist and are lighter than the bar lines', () => {
   const alpha = (body: string): number => {
     const match = /rgba\(([^)]+)\)/.exec(body);
