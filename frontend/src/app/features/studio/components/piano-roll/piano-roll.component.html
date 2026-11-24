@@ -57,7 +57,6 @@
               [style.width.px]="gridCellWidth()"
               [class.black]="entry.row.black"
               [class.bar-edge]="cell.start % stepsPerBar() === 0"
-              [class.on]="entry.row.notes[cell.start]"
               [class.playing]="isPlaying() && cell.start === currentStep()"
               (click)="selectedNote.set({ row: entry.index, step: cell.start }); toggleNote.emit({ row: entry.index, step: cell.start, active: true, length: cell.length })"
               (contextmenu)="onNoteContextMenu($event, entry.index, cell.start)"></button>

@@ -293,12 +293,6 @@
   filter: brightness(1.3);
 }
 
-.note-cell.on {
-  background: linear-gradient(180deg, #ffb347, #e88400);
-  border-color: #7a4a00;
-  box-shadow: 0 0 6px rgba(245, 166, 35, 0.5);
-}
-
 .note-cell.playing {
   outline: 1px solid rgba(255, 255, 255, 0.55);
   outline-offset: -1px;
