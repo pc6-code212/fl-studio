@@ -103,18 +103,18 @@
   overflow-y: scroll;
   overflow-x: hidden;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
   scrollbar-color: #f5a623 #141518;
+  background: #15161a;
   padding: 4px 4px 12px;
 }
 
 .piano-body::-webkit-scrollbar {
   width: 13px;
-  height: 13px;
 }
 
 .piano-body::-webkit-scrollbar-track {
   background: #141518;
-  border-left: 1px solid #3c4047;
   border-radius: 3px;
 }
 
@@ -161,6 +161,11 @@
   letter-spacing: 0.4px;
   color: var(--accent, #f5a623);
   white-space: nowrap;
+  pointer-events: none;
+}
+
+.row-spacer {
+  width: 100%;
   pointer-events: none;
 }
 

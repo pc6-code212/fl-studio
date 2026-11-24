@@ -40,46 +40,47 @@
         }
       </div>
     </div>
-    @for (row of rows(); track row.label; let rowIndex = $index) {
-      <div class="piano-row" [attr.data-note]="row.label" [class.pressed]="isPressed(row.label)">
+    <div class="row-spacer" [style.height.px]="topSpacerHeight()"></div>
+    @for (entry of visibleRows(); track entry.row.label) {
+      <div class="piano-row" [attr.data-note]="entry.row.label" [class.pressed]="isPressed(entry.row.label)">
         <div
           class="key"
-          [class.black]="row.black"
-          [class.pressed]="isPressed(row.label)"
-          (pointerdown)="onKeyPointerDown($event, row.label)"
-          (pointerenter)="onKeyPointerEnter($event, row.label)">{{ row.label }}</div>
+          [class.black]="entry.row.black"
+          [class.pressed]="isPressed(entry.row.label)"
+          (pointerdown)="onKeyPointerDown($event, entry.row.label)"
+          (pointerenter)="onKeyPointerEnter($event, entry.row.label)">{{ entry.row.label }}</div>
         <div class="note-lane" [style.width.px]="laneWidth()">
           @for (s of visibleSteps(); track s) {
-            @if (!isCovered(rowIndex, s)) {
+            @if (!isCovered(entry.index, s)) {
               <button
                 class="note-cell"
                 [style.left.px]="s * stepWidth"
-                [class.black]="row.black"
+                [class.black]="entry.row.black"
                 [class.beat]="s % snapSteps() === 0"
                 [class.bar-edge]="s % stepsPerBar() === 0"
-                [class.on]="row.notes[s]"
+                [class.on]="entry.row.notes[s]"
                 [class.playing]="isPlaying() && s === currentStep()"
-                (click)="selectedNote.set({ row: rowIndex, step: s }); toggleNote.emit({ row: rowIndex, step: s, active: true })"
-                (contextmenu)="onNoteContextMenu($event, rowIndex, s)"></button>
+                (click)="selectedNote.set({ row: entry.index, step: s }); toggleNote.emit({ row: entry.index, step: s, active: true })"
+                (contextmenu)="onNoteContextMenu($event, entry.index, s)"></button>
             }
           }
-          @for (note of notesInRow(rowIndex); track note.start) {
+          @for (note of notesInRow(entry.index); track note.start) {
             <div
               class="note-block"
               [style.left.%]="note.start / steps().length * 100"
               [style.width.%]="note.length / steps().length * 100"
-              (click)="selectedNote.set({ row: rowIndex, step: note.start }); $event.stopPropagation()"
-              (contextmenu)="onNoteBlockContextMenu($event, rowIndex, note.start)">
+              (click)="selectedNote.set({ row: entry.index, step: note.start }); $event.stopPropagation()"
+              (contextmenu)="onNoteBlockContextMenu($event, entry.index, note.start)">
               <span
                 class="note-handle left"
                 title="Drag to resize"
-                (pointerdown)="startNoteResize($event, rowIndex, note.start, 'left')"
+                (pointerdown)="startNoteResize($event, entry.index, note.start, 'left')"
                 (click)="$event.stopPropagation()"
                 (contextmenu)="onHandleContextMenu($event)"></span>
               <span
                 class="note-handle right"
                 title="Drag to resize"
-                (pointerdown)="startNoteResize($event, rowIndex, note.start, 'right')"
+                (pointerdown)="startNoteResize($event, entry.index, note.start, 'right')"
                 (click)="$event.stopPropagation()"
                 (contextmenu)="onHandleContextMenu($event)"></span>
             </div>
@@ -87,5 +88,6 @@
         </div>
       </div>
     }
+    <div class="row-spacer" [style.height.px]="bottomSpacerHeight()"></div>
   </div>
 </div>

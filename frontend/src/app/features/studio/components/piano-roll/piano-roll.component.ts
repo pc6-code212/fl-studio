@@ -14,6 +14,7 @@ import {
   signal
 } from '@angular/core';
 import { PianoRow } from '@features/studio/models/studio.model';
+import { computeColumnWindow, computeRowWindow } from './piano-roll.viewport';
 
 export interface NoteToggleEvent {
   row: number;
@@ -61,12 +62,16 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   @ViewChild('hscroll') private hscrollRef?: ElementRef<HTMLElement>;
 
   private readonly zone = inject(NgZone);
-  private readonly rowHeight = 22;
+  readonly rowHeight = 22;
+  private readonly rulerHeight = 24;
   private readonly overscanSteps = 8;
   private readonly windowChunk = 8;
+  private readonly overscanRows = 6;
+  private readonly rowChunk = 12;
   private activePointerNote: string | null = null;
   private lastExtend = 0;
   private resizeObserver?: ResizeObserver;
+  private scrollRaf = 0;
 
   readonly cellWidth = 18;
   readonly cellGap = 3;
@@ -86,6 +91,29 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     const start = Math.max(0, Math.min(this.visibleStart(), steps.length));
     const end = Math.max(start, Math.min(this.visibleEnd(), steps.length));
     return steps.slice(start, end);
+  });
+
+  // Rows are virtualized too: with 128 pitches the full grid would otherwise
+  // paint thousands of cells on every scroll frame.
+  readonly visibleRowStart = signal(0);
+  readonly visibleRowEnd = signal(48);
+  readonly visibleRows = computed(() => {
+    const rows = this.rows();
+    const start = Math.max(0, Math.min(this.visibleRowStart(), rows.length));
+    const end = Math.max(start, Math.min(this.visibleRowEnd(), rows.length));
+    return rows
+      .slice(start, end)
+      .map((row, offset) => ({ row, index: start + offset }));
+  });
+  readonly topSpacerHeight = computed(() => {
+    const total = this.rows().length;
+    const start = Math.max(0, Math.min(this.visibleRowStart(), total));
+    return start * this.rowHeight;
+  });
+  readonly bottomSpacerHeight = computed(() => {
+    const total = this.rows().length;
+    const end = Math.max(0, Math.min(this.visibleRowEnd(), total));
+    return Math.max(0, total - end) * this.rowHeight;
   });
 
   readonly coveredCells = computed(() =>
@@ -139,7 +167,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
       hscroll?.addEventListener('scroll', this.handleHScroll, { passive: true });
       window.addEventListener('resize', this.handleResize);
       if (body && typeof ResizeObserver !== 'undefined') {
-        this.resizeObserver = new ResizeObserver(() => this.updateVisibleWindow());
+        this.resizeObserver = new ResizeObserver(() => this.scheduleUpdate());
         this.resizeObserver.observe(body);
       }
     });
@@ -154,6 +182,10 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     this.hscrollRef?.nativeElement.removeEventListener('scroll', this.handleHScroll);
     window.removeEventListener('resize', this.handleResize);
     this.resizeObserver?.disconnect();
+    if (this.scrollRaf) {
+      cancelAnimationFrame(this.scrollRaf);
+      this.scrollRaf = 0;
+    }
   }
 
   onHeaderDoubleClick(event: MouseEvent): void {
@@ -217,7 +249,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     if (body && hscroll && Math.abs(hscroll.scrollLeft - body.scrollLeft) > 1) {
       hscroll.scrollLeft = body.scrollLeft;
     }
-    this.updateVisibleWindow();
+    this.scheduleUpdate();
   };
 
   private readonly handleHScroll = (): void => {
@@ -226,7 +258,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     if (el && body && Math.abs(body.scrollLeft - el.scrollLeft) > 1) {
       body.scrollLeft = el.scrollLeft;
     }
-    this.updateVisibleWindow();
+    this.scheduleUpdate();
     if (!el) {
       return;
     }
@@ -241,27 +273,57 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
     this.zone.run(() => this.extendBars.emit());
   };
 
-  private readonly handleResize = (): void => this.updateVisibleWindow();
+  private readonly handleResize = (): void => this.scheduleUpdate();
+
+  // Coalesce every scroll event into a single frame so the window math and the
+  // resulting change detection run at most once per paint.
+  private scheduleUpdate(): void {
+    if (this.scrollRaf) {
+      return;
+    }
+    this.scrollRaf = requestAnimationFrame(() => {
+      this.scrollRaf = 0;
+      this.updateVisibleWindow();
+    });
+  }
 
   private updateVisibleWindow(force = false): void {
     const body = this.body?.nativeElement;
     if (!body) {
       return;
     }
-    const total = this.steps().length;
-    const viewLeft = Math.max(0, body.scrollLeft - this.keyWidth);
-    const viewRight = Math.max(0, body.scrollLeft + body.clientWidth - this.keyWidth);
-    const chunk = this.windowChunk;
-    const start = Math.max(0, Math.floor(viewLeft / this.stepWidth) - this.overscanSteps);
-    const end = Math.min(total, Math.ceil(viewRight / this.stepWidth) + this.overscanSteps);
-    const chunkStart = Math.floor(start / chunk) * chunk;
-    const chunkEnd = Math.min(total, Math.ceil(end / chunk) * chunk + chunk);
-    if (!force && chunkStart === this.visibleStart() && chunkEnd === this.visibleEnd()) {
+    const columns = computeColumnWindow({
+      scrollLeft: body.scrollLeft,
+      viewportWidth: body.clientWidth,
+      keyWidth: this.keyWidth,
+      stepWidth: this.stepWidth,
+      total: this.steps().length,
+      overscan: this.overscanSteps,
+      chunk: this.windowChunk
+    });
+    const rows = computeRowWindow({
+      scrollTop: body.scrollTop,
+      viewportHeight: body.clientHeight,
+      rowHeight: this.rowHeight,
+      headerHeight: this.rulerHeight,
+      total: this.rows().length,
+      overscan: this.overscanRows,
+      chunk: this.rowChunk
+    });
+    if (
+      !force &&
+      columns.start === this.visibleStart() &&
+      columns.end === this.visibleEnd() &&
+      rows.start === this.visibleRowStart() &&
+      rows.end === this.visibleRowEnd()
+    ) {
       return;
     }
     this.zone.run(() => {
-      this.visibleStart.set(chunkStart);
-      this.visibleEnd.set(chunkEnd);
+      this.visibleStart.set(columns.start);
+      this.visibleEnd.set(columns.end);
+      this.visibleRowStart.set(rows.start);
+      this.visibleRowEnd.set(rows.end);
     });
   }
 

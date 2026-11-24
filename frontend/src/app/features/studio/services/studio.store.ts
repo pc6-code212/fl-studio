@@ -291,6 +291,7 @@ export class StudioStore implements OnDestroy {
       patternNumber: this.patternNumber(),
       keyboardPiano: this.keyboardPiano(),
       playlistBars: this.playlistBars(),
+      pianoRollBars: this.pianoRollBars(),
       patterns: this.patterns(),
       playlistTracks: this.playlistTracks(),
       playlistClips: this.playlistClips()
@@ -307,6 +308,7 @@ export class StudioStore implements OnDestroy {
     this.patternNumber.set(state.patternNumber);
     this.keyboardPiano.set(state.keyboardPiano);
     this.playlistBars.set(state.playlistBars);
+    this.pianoRollBars.set(state.pianoRollBars);
     this.patterns.set(state.patterns);
     this.playlistTracks.set(state.playlistTracks);
     this.playlistClips.set(state.playlistClips);
