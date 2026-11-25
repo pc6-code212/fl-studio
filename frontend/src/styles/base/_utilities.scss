@@ -130,14 +130,16 @@ input[type="range"]::-webkit-slider-thumb {
 
 .panel.maximized {
   position: fixed;
-  top: 92px;
-  left: 10px;
-  right: 10px;
-  bottom: 32px;
-  z-index: 100;
-  width: auto;
-  height: auto;
-  max-height: none;
+  inset: 0;
+  z-index: 9999;
+  // Beat the per-panel component sizes (rack height, playlist height, ...)
+  // that would otherwise keep the maximized panel from filling the screen.
+  width: auto !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  border-radius: 0;
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.65);
 }
 .panel-slot {

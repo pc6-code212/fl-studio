@@ -6,6 +6,7 @@ import {
   computed,
   inject
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { BrowserPanelComponent } from '@features/studio/components/browser-panel/browser-panel.component';
 import { ChannelRackComponent } from '@features/studio/components/channel-rack/channel-rack.component';
 import { MixerPanelComponent } from '@features/studio/components/mixer-panel/mixer-panel.component';
@@ -26,7 +27,8 @@ import { StudioStore } from '@features/studio/services/studio.store';
     PianoRollComponent,
     PlaylistComponent,
     MixerPanelComponent,
-    StatusBarComponent
+    StatusBarComponent,
+    NgTemplateOutlet
   ],
   templateUrl: './studio.page.html',
   styleUrl: './studio.page.css',
@@ -40,6 +42,13 @@ export class StudioPage implements OnInit {
     return mixer.open && !mixer.maximized && !mixer.floating
       ? `212px minmax(0, 1fr) 6px ${this.store.mixerWidth()}px`
       : '212px minmax(0, 1fr)';
+  });
+
+  readonly maximizedPanel = computed<PanelId | null>(() => {
+    const panels = this.store.panels();
+    return (
+      (Object.keys(panels) as PanelId[]).find(id => panels[id].maximized) ?? null
+    );
   });
 
   readonly showRackSplitter = computed(() => {

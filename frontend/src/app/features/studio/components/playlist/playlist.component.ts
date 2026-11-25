@@ -53,6 +53,7 @@ export class PlaylistComponent {
   readonly fill = input<boolean>(false);
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
+  readonly floating = input<boolean>(false);
 
   readonly toggleClip = output<PlaylistCellEvent>();
   readonly openClip = output<PlaylistClip>();

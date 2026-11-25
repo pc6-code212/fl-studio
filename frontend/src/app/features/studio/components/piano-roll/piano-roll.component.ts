@@ -66,6 +66,7 @@ export class PianoRollComponent implements AfterViewInit, OnDestroy {
   readonly pressedNotes = input<string[]>([]);
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
+  readonly floating = input<boolean>(false);
 
   readonly toggleNote = output<NoteToggleEvent>();
   readonly resizeNote = output<NoteResizeEvent>();

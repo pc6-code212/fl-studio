@@ -23,6 +23,104 @@
       (undo)="store.undo()"
       (redo)="store.redo()" />
 
+<ng-template #channelRackPanel>
+  <app-channel-rack
+    [channels]="store.channels()"
+    [steps]="store.steps"
+    [selected]="store.selectedChannel()"
+    [currentStep]="store.channelStep()"
+    [isPlaying]="store.isPlaying()"
+    [collapsed]="store.panels().channelRack.collapsed"
+    [maximized]="store.panels().channelRack.maximized"
+    [floating]="store.panels().channelRack.floating"
+    (select)="store.selectChannel($event)"
+    (toggleStep)="store.setStep($event.id, $event.step, $event.active)"
+    (toggleMute)="store.toggleMute($event)"
+    (toggleSolo)="store.toggleSolo($event)"
+    (preview)="store.previewChannel($event)"
+    (openPianoRoll)="store.openInPianoRoll($event)"
+    (panChange)="store.setChannelPan($event.id, $event.pan)"
+    (volumeChange)="store.setChannelVolume($event.id, $event.volume)"
+    (mixerChannelChange)="store.setChannelMixer($event.id, $event.mixerChannel)"
+    (collapseToggle)="store.togglePanelCollapsed('channelRack')"
+    (maximizeToggle)="store.togglePanelMaximized('channelRack')"
+    (floatToggle)="store.togglePanelFloating('channelRack')"
+    (headerDrag)="onPanelDragStart('channelRack', $event)"
+    (closePanel)="store.closePanel('channelRack')" />
+</ng-template>
+
+<ng-template #pianoRollPanel>
+  <app-piano-roll
+    [rows]="store.pianoRows()"
+    [steps]="store.pianoRollSteps()"
+    [stepsPerBar]="store.stepsPerBar"
+    [currentStep]="store.currentStep()"
+    [isPlaying]="store.isPlaying()"
+    [channelName]="store.selected().name"
+    [pressedNotes]="store.activeNotes()"
+    [collapsed]="store.panels().pianoRoll.collapsed"
+    [maximized]="store.panels().pianoRoll.maximized"
+    [floating]="store.panels().pianoRoll.floating"
+    (toggleNote)="store.setNote($event.row, $event.step, $event.active, $event.length)"
+    (resizeNote)="store.resizeNote($event.row, $event.oldStart, $event.start, $event.length)"
+    (moveNote)="store.moveNote($event.fromRow, $event.fromStep, $event.toRow, $event.toStep)"
+    (noteOn)="store.pressNote($event)"
+    (noteOff)="store.releaseNote($event)"
+    (extendBars)="store.extendPianoRollBars(8)"
+    (collapseToggle)="store.togglePanelCollapsed('pianoRoll')"
+    (maximizeToggle)="store.togglePanelMaximized('pianoRoll')"
+    (floatToggle)="store.togglePanelFloating('pianoRoll')"
+    (headerDrag)="onPanelDragStart('pianoRoll', $event)"
+    (closePanel)="store.closePanel('pianoRoll')" />
+</ng-template>
+
+<ng-template #playlistPanel>
+  <app-playlist
+    [tracks]="store.playlistTracks()"
+    [clips]="store.playlistClips()"
+    [clipNotes]="store.playlistClipNotes()"
+    [patternLength]="store.pianoRollTotalSteps()"
+    [bars]="store.playlistBars()"
+    [stepsPerBar]="store.stepsPerBar"
+    [playhead]="store.playlistStep()"
+    [isPlaying]="store.isPlaying()"
+    [fill]="!store.panels().pianoRoll.open || store.panels().pianoRoll.collapsed || store.panels().pianoRoll.floating"
+    [collapsed]="store.panels().playlist.collapsed"
+    [maximized]="store.panels().playlist.maximized"
+    [floating]="store.panels().playlist.floating"
+    (toggleClip)="store.setPlaylistClip($event.track, $event.start, $event.active)"
+    (openClip)="store.openClipInPianoRoll($event)"
+    (resizeClip)="store.resizePlaylistClip($event.id, $event.start, $event.length)"
+    (toggleMute)="store.togglePlaylistMute($event)"
+    (toggleSolo)="store.togglePlaylistSolo($event)"
+    (extendBars)="store.extendPlaylistBars(8)"
+    (collapseToggle)="store.togglePanelCollapsed('playlist')"
+    (maximizeToggle)="store.togglePanelMaximized('playlist')"
+    (floatToggle)="store.togglePanelFloating('playlist')"
+    (headerDrag)="onPanelDragStart('playlist', $event)"
+    (closePanel)="store.closePanel('playlist')" />
+</ng-template>
+
+<ng-template #mixerPanel>
+  <app-mixer-panel
+    [channels]="store.channels()"
+    [masterVolume]="store.masterVolume()"
+    [isPlaying]="store.isPlaying()"
+    [currentStep]="store.channelStep()"
+    [collapsed]="store.panels().mixer.collapsed"
+    [maximized]="store.panels().mixer.maximized"
+    [floating]="store.panels().mixer.floating"
+    (volumeChange)="store.setChannelVolume($event.id, $event.volume)"
+    (masterVolumeChange)="store.setMasterVolume($event)"
+    (toggleMute)="store.toggleMute($event)"
+    (toggleSolo)="store.toggleSolo($event)"
+    (collapseToggle)="store.togglePanelCollapsed('mixer')"
+    (maximizeToggle)="store.togglePanelMaximized('mixer')"
+    (floatToggle)="store.togglePanelFloating('mixer')"
+    (headerDrag)="onPanelDragStart('mixer', $event)"
+    (closePanel)="store.closePanel('mixer')" />
+</ng-template>
+
 <main
   class="workspace"
   [style.grid-template-columns]="workspaceColumns()"
@@ -41,7 +139,7 @@
     (previewFile)="store.previewFile($event)" />
 
   <section class="center">
-    @if (store.panels().channelRack.open) {
+    @if (store.panels().channelRack.open && !store.panels().channelRack.maximized) {
       <div
         class="panel-slot"
         [class.floating]="store.panels().channelRack.floating"
@@ -52,28 +150,7 @@
         [style.top.px]="store.panels().channelRack.floating ? store.panels().channelRack.y : null"
         [style.width.px]="store.panels().channelRack.floating ? store.panels().channelRack.width : null"
         [style.height.px]="store.panels().channelRack.floating ? store.panels().channelRack.height : null">
-        <app-channel-rack
-          [channels]="store.channels()"
-          [steps]="store.steps"
-          [selected]="store.selectedChannel()"
-          [currentStep]="store.channelStep()"
-          [isPlaying]="store.isPlaying()"
-          [collapsed]="store.panels().channelRack.collapsed"
-          [maximized]="store.panels().channelRack.maximized"
-          (select)="store.selectChannel($event)"
-          (toggleStep)="store.setStep($event.id, $event.step, $event.active)"
-          (toggleMute)="store.toggleMute($event)"
-          (toggleSolo)="store.toggleSolo($event)"
-          (preview)="store.previewChannel($event)"
-          (openPianoRoll)="store.openInPianoRoll($event)"
-          (panChange)="store.setChannelPan($event.id, $event.pan)"
-          (volumeChange)="store.setChannelVolume($event.id, $event.volume)"
-          (mixerChannelChange)="store.setChannelMixer($event.id, $event.mixerChannel)"
-          (collapseToggle)="store.togglePanelCollapsed('channelRack')"
-          (maximizeToggle)="store.togglePanelMaximized('channelRack')"
-          (floatToggle)="store.togglePanelFloating('channelRack')"
-          (headerDrag)="onPanelDragStart('channelRack', $event)"
-          (closePanel)="store.closePanel('channelRack')" />
+        <ng-container [ngTemplateOutlet]="channelRackPanel"></ng-container>
         @if (store.panels().channelRack.floating) {
           <div
             class="resize-grip"
@@ -87,7 +164,7 @@
       }
     }
 
-    @if (store.panels().pianoRoll.open) {
+    @if (store.panels().pianoRoll.open && !store.panels().pianoRoll.maximized) {
       <div
         class="panel-slot"
         [class.floating]="store.panels().pianoRoll.floating"
@@ -98,27 +175,7 @@
         [style.top.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.y : null"
         [style.width.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.width : null"
         [style.height.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.height : null">
-        <app-piano-roll
-          [rows]="store.pianoRows()"
-          [steps]="store.pianoRollSteps()"
-          [stepsPerBar]="store.stepsPerBar"
-          [currentStep]="store.currentStep()"
-          [isPlaying]="store.isPlaying()"
-          [channelName]="store.selected().name"
-          [pressedNotes]="store.activeNotes()"
-          [collapsed]="store.panels().pianoRoll.collapsed"
-          [maximized]="store.panels().pianoRoll.maximized"
-          (toggleNote)="store.setNote($event.row, $event.step, $event.active, $event.length)"
-          (resizeNote)="store.resizeNote($event.row, $event.oldStart, $event.start, $event.length)"
-          (moveNote)="store.moveNote($event.fromRow, $event.fromStep, $event.toRow, $event.toStep)"
-          (noteOn)="store.pressNote($event)"
-          (noteOff)="store.releaseNote($event)"
-          (extendBars)="store.extendPianoRollBars(8)"
-          (collapseToggle)="store.togglePanelCollapsed('pianoRoll')"
-          (maximizeToggle)="store.togglePanelMaximized('pianoRoll')"
-          (floatToggle)="store.togglePanelFloating('pianoRoll')"
-          (headerDrag)="onPanelDragStart('pianoRoll', $event)"
-          (closePanel)="store.closePanel('pianoRoll')" />
+        <ng-container [ngTemplateOutlet]="pianoRollPanel"></ng-container>
         @if (store.panels().pianoRoll.floating) {
           <div
             class="resize-grip"
@@ -132,7 +189,7 @@
       <div class="hsplit" title="Drag to resize" (pointerdown)="onPlaylistResizeStart($event)"></div>
     }
 
-    @if (store.panels().playlist.open) {
+    @if (store.panels().playlist.open && !store.panels().playlist.maximized) {
       <div
         class="panel-slot"
         [class.floating]="store.panels().playlist.floating"
@@ -143,29 +200,7 @@
         [style.top.px]="store.panels().playlist.floating ? store.panels().playlist.y : null"
         [style.width.px]="store.panels().playlist.floating ? store.panels().playlist.width : null"
         [style.height.px]="store.panels().playlist.floating ? store.panels().playlist.height : null">
-        <app-playlist
-          [tracks]="store.playlistTracks()"
-          [clips]="store.playlistClips()"
-          [clipNotes]="store.playlistClipNotes()"
-          [patternLength]="store.pianoRollTotalSteps()"
-          [bars]="store.playlistBars()"
-          [stepsPerBar]="store.stepsPerBar"
-          [playhead]="store.playlistStep()"
-          [isPlaying]="store.isPlaying()"
-          [fill]="!store.panels().pianoRoll.open || store.panels().pianoRoll.collapsed || store.panels().pianoRoll.floating"
-          [collapsed]="store.panels().playlist.collapsed"
-          [maximized]="store.panels().playlist.maximized"
-          (toggleClip)="store.setPlaylistClip($event.track, $event.start, $event.active)"
-          (openClip)="store.openClipInPianoRoll($event)"
-          (resizeClip)="store.resizePlaylistClip($event.id, $event.start, $event.length)"
-          (toggleMute)="store.togglePlaylistMute($event)"
-          (toggleSolo)="store.togglePlaylistSolo($event)"
-          (extendBars)="store.extendPlaylistBars(8)"
-          (collapseToggle)="store.togglePanelCollapsed('playlist')"
-          (maximizeToggle)="store.togglePanelMaximized('playlist')"
-          (floatToggle)="store.togglePanelFloating('playlist')"
-          (headerDrag)="onPanelDragStart('playlist', $event)"
-          (closePanel)="store.closePanel('playlist')" />
+        <ng-container [ngTemplateOutlet]="playlistPanel"></ng-container>
         @if (store.panels().playlist.floating) {
           <div
             class="resize-grip"
@@ -176,8 +211,8 @@
     }
   </section>
 
-  @if (store.panels().mixer.open) {
-    @if (!store.panels().mixer.maximized && !store.panels().mixer.floating) {
+  @if (store.panels().mixer.open && !store.panels().mixer.maximized) {
+    @if (!store.panels().mixer.floating) {
       <div class="vsplit" title="Drag to resize" (pointerdown)="onMixerResizeStart($event)"></div>
     }
     <div
@@ -190,22 +225,7 @@
       [style.top.px]="store.panels().mixer.floating ? store.panels().mixer.y : null"
       [style.width.px]="store.panels().mixer.floating ? store.panels().mixer.width : null"
       [style.height.px]="store.panels().mixer.floating ? store.panels().mixer.height : null">
-      <app-mixer-panel
-        [channels]="store.channels()"
-        [masterVolume]="store.masterVolume()"
-        [isPlaying]="store.isPlaying()"
-        [currentStep]="store.channelStep()"
-        [collapsed]="store.panels().mixer.collapsed"
-        [maximized]="store.panels().mixer.maximized"
-        (volumeChange)="store.setChannelVolume($event.id, $event.volume)"
-        (masterVolumeChange)="store.setMasterVolume($event)"
-        (toggleMute)="store.toggleMute($event)"
-        (toggleSolo)="store.toggleSolo($event)"
-        (collapseToggle)="store.togglePanelCollapsed('mixer')"
-        (maximizeToggle)="store.togglePanelMaximized('mixer')"
-        (floatToggle)="store.togglePanelFloating('mixer')"
-        (headerDrag)="onPanelDragStart('mixer', $event)"
-        (closePanel)="store.closePanel('mixer')" />
+      <ng-container [ngTemplateOutlet]="mixerPanel"></ng-container>
       @if (store.panels().mixer.floating) {
         <div
           class="resize-grip"
@@ -215,6 +235,25 @@
     </div>
   }
 </main>
+
+@if (maximizedPanel(); as maximized) {
+  <div class="maximized-layer">
+    @switch (maximized) {
+      @case ('channelRack') {
+        <ng-container [ngTemplateOutlet]="channelRackPanel"></ng-container>
+      }
+      @case ('pianoRoll') {
+        <ng-container [ngTemplateOutlet]="pianoRollPanel"></ng-container>
+      }
+      @case ('playlist') {
+        <ng-container [ngTemplateOutlet]="playlistPanel"></ng-container>
+      }
+      @case ('mixer') {
+        <ng-container [ngTemplateOutlet]="mixerPanel"></ng-container>
+      }
+    }
+  </div>
+}
 
 <app-status-bar
   [patternNumber]="store.patternNumber()"

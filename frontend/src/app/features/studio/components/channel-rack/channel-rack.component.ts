@@ -39,6 +39,7 @@ export class ChannelRackComponent {
   readonly isPlaying = input.required<boolean>();
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
+  readonly floating = input<boolean>(false);
 
   readonly select = output<number>();
   readonly toggleStep = output<StepToggleEvent>();

@@ -22,6 +22,7 @@ export class MixerPanelComponent {
   readonly currentStep = input.required<number>();
   readonly collapsed = input<boolean>(false);
   readonly maximized = input<boolean>(false);
+  readonly floating = input<boolean>(false);
 
   readonly volumeChange = output<VolumeChangeEvent>();
   readonly masterVolumeChange = output<number>();

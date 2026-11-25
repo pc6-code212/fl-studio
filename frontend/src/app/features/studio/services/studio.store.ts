@@ -448,6 +448,7 @@ export class StudioStore implements OnDestroy {
       return;
     }
     this.openPanel(id);
+    this.frontPanel.set(id);
   }
 
   private openPanel(id: PanelId): void {
@@ -457,19 +458,27 @@ export class StudioStore implements OnDestroy {
     if (!floating) {
       this.centerPanel.set(id);
     }
-    this.panels.update(states => ({
-      ...states,
-      [id]: {
-        ...states[id],
+    this.panels.update(states => {
+      const next = {} as PanelStates;
+      (Object.keys(states) as PanelId[]).forEach(key => {
+        const state = { ...states[key] };
+        // Opening a panel must not leave another panel's maximized overlay on
+        // top of it, but the maximized panel keeps its open state.
+        if (key !== id && state.maximized) {
+          state.maximized = false;
+        }
+        next[key] = state;
+      });
+      next[id] = {
+        ...next[id],
         open: true,
         collapsed: false,
         maximized: false,
         floating
-      }
-    }));
-    if (floating) {
-      this.frontPanel.set(id);
-    }
+      };
+      return next;
+    });
+    this.frontPanel.set(id);
   }
 
   closePanel(id: PanelId): void {
@@ -499,12 +508,16 @@ export class StudioStore implements OnDestroy {
       const next = {} as PanelStates;
       (Object.keys(states) as PanelId[]).forEach(key => {
         const state = { ...states[key], maximized: key === id ? maximized : false };
-        if (maximized && key !== id && state.open && !state.floating) {
-          state.floating = true;
-        }
+        // Other panels stay exactly as they were (open, docked or floating);
+        // the maximized panel simply covers them.
         next[key] = state;
       });
-      next[id] = { ...next[id], open: true, collapsed: false, floating: false };
+      next[id] = {
+        ...next[id],
+        open: true,
+        collapsed: false,
+        floating: maximized ? false : next[id].floating
+      };
       return next;
     });
     if (maximized) {
@@ -744,23 +757,7 @@ export class StudioStore implements OnDestroy {
 
   openInPianoRoll(index: number): void {
     this.selectedChannel.set(index);
-    const center = this.panels()[this.centerPanel()];
-    const centerVisible = center.open && !center.collapsed;
-    const floating = this.centerPanel() !== 'pianoRoll' && centerVisible;
-    if (!floating) {
-      this.centerPanel.set('pianoRoll');
-    }
-    this.panels.update(states => ({
-      ...states,
-      pianoRoll: {
-        ...states.pianoRoll,
-        open: true,
-        collapsed: false,
-        maximized: false,
-        floating
-      }
-    }));
-    this.frontPanel.set('pianoRoll');
+    this.openPanel('pianoRoll');
   }
 
   openClipInPianoRoll(clip: PlaylistClip): void {
