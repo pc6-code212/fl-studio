@@ -1,0 +1,23 @@
+:host {
+  display: contents;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.hsplit {
+  flex: 0 0 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: row-resize;
+}
+
+.hsplit:hover {
+  background: var(--accent);
+}

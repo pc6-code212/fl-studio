@@ -9,6 +9,7 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { BrowserPanelComponent } from '@features/studio/components/browser-panel/browser-panel.component';
 import { ChannelRackComponent } from '@features/studio/components/channel-rack/channel-rack.component';
+import { MaxSectionComponent } from '@features/studio/components/max-section/max-section.component';
 import { MixerPanelComponent } from '@features/studio/components/mixer-panel/mixer-panel.component';
 import { PianoRollComponent } from '@features/studio/components/piano-roll/piano-roll.component';
 import { PlaylistComponent } from '@features/studio/components/playlist/playlist.component';
@@ -23,6 +24,7 @@ import { StudioStore } from '@features/studio/services/studio.store';
   imports: [
     ToolbarComponent,
     BrowserPanelComponent,
+    MaxSectionComponent,
     ChannelRackComponent,
     PianoRollComponent,
     PlaylistComponent,
@@ -48,33 +50,6 @@ export class StudioPage implements OnInit {
     const panels = this.store.panels();
     return (
       (Object.keys(panels) as PanelId[]).find(id => panels[id].maximized) ?? null
-    );
-  });
-
-  readonly showRackSplitter = computed(() => {
-    const panels = this.store.panels();
-    return (
-      panels.channelRack.open &&
-      panels.pianoRoll.open &&
-      !panels.channelRack.collapsed &&
-      !panels.channelRack.maximized &&
-      !panels.channelRack.floating &&
-      !panels.pianoRoll.maximized &&
-      !panels.pianoRoll.floating
-    );
-  });
-
-  readonly showPlaylistSplitter = computed(() => {
-    const panels = this.store.panels();
-    return (
-      panels.playlist.open &&
-      panels.pianoRoll.open &&
-      !panels.playlist.collapsed &&
-      !panels.playlist.maximized &&
-      !panels.playlist.floating &&
-      !panels.pianoRoll.collapsed &&
-      !panels.pianoRoll.maximized &&
-      !panels.pianoRoll.floating
     );
   });
 

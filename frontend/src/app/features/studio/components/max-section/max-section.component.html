@@ -1,0 +1,72 @@
+<section class="center">
+  @if (store.panels().channelRack.open && !store.panels().channelRack.maximized) {
+    <div
+      class="panel-slot"
+      [class.floating]="store.panels().channelRack.floating"
+      [class.collapsed]="store.panels().channelRack.collapsed"
+      [style.z-index]="store.frontPanel() === 'channelRack' ? 140 : 130"
+      (pointerdown)="store.bringPanelToFront('channelRack')"
+      [style.left.px]="store.panels().channelRack.floating ? store.panels().channelRack.x : null"
+      [style.top.px]="store.panels().channelRack.floating ? store.panels().channelRack.y : null"
+      [style.width.px]="store.panels().channelRack.floating ? store.panels().channelRack.width : null"
+      [style.height.px]="store.panels().channelRack.floating ? store.panels().channelRack.height : null">
+      <ng-container [ngTemplateOutlet]="channelRackTemplate()"></ng-container>
+      @if (store.panels().channelRack.floating) {
+        <div
+          class="resize-grip"
+          title="Drag to resize"
+          (pointerdown)="panelResizeStart.emit({ id: 'channelRack', event: $event })"></div>
+      }
+    </div>
+
+    @if (showRackSplitter()) {
+      <div class="hsplit" title="Drag to resize" (pointerdown)="rackResizeStart.emit($event)"></div>
+    }
+  }
+
+  @if (store.panels().pianoRoll.open && !store.panels().pianoRoll.maximized) {
+    <div
+      class="panel-slot"
+      [class.floating]="store.panels().pianoRoll.floating"
+      [class.collapsed]="store.panels().pianoRoll.collapsed"
+      [style.z-index]="store.frontPanel() === 'pianoRoll' ? 140 : 130"
+      (pointerdown)="store.bringPanelToFront('pianoRoll')"
+      [style.left.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.x : null"
+      [style.top.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.y : null"
+      [style.width.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.width : null"
+      [style.height.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.height : null">
+      <ng-container [ngTemplateOutlet]="pianoRollTemplate()"></ng-container>
+      @if (store.panels().pianoRoll.floating) {
+        <div
+          class="resize-grip"
+          title="Drag to resize"
+          (pointerdown)="panelResizeStart.emit({ id: 'pianoRoll', event: $event })"></div>
+      }
+    </div>
+  }
+
+  @if (showPlaylistSplitter()) {
+    <div class="hsplit" title="Drag to resize" (pointerdown)="playlistResizeStart.emit($event)"></div>
+  }
+
+  @if (store.panels().playlist.open && !store.panels().playlist.maximized) {
+    <div
+      class="panel-slot"
+      [class.floating]="store.panels().playlist.floating"
+      [class.collapsed]="store.panels().playlist.collapsed"
+      [style.z-index]="store.frontPanel() === 'playlist' ? 140 : 130"
+      (pointerdown)="store.bringPanelToFront('playlist')"
+      [style.left.px]="store.panels().playlist.floating ? store.panels().playlist.x : null"
+      [style.top.px]="store.panels().playlist.floating ? store.panels().playlist.y : null"
+      [style.width.px]="store.panels().playlist.floating ? store.panels().playlist.width : null"
+      [style.height.px]="store.panels().playlist.floating ? store.panels().playlist.height : null">
+      <ng-container [ngTemplateOutlet]="playlistTemplate()"></ng-container>
+      @if (store.panels().playlist.floating) {
+        <div
+          class="resize-grip"
+          title="Drag to resize"
+          (pointerdown)="panelResizeStart.emit({ id: 'playlist', event: $event })"></div>
+      }
+    </div>
+  }
+</section>
