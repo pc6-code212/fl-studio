@@ -2,6 +2,10 @@
   display: contents;
 }
 
+:host(.collapsed) {
+  display: none;
+}
+
 .piano-roll {
   display: flex;
   flex-direction: column;

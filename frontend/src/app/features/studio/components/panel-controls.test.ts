@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const panels = ['channel-rack', 'mixer-panel', 'piano-roll', 'playlist'] as const;
 
-function read(name: string, ext: 'html' | 'ts'): string {
+function read(name: string, ext: 'html' | 'ts' | 'css'): string {
   return readFileSync(
     new URL(`./${name}/${name}.component.${ext}`, import.meta.url),
     'utf8'
@@ -12,6 +12,16 @@ function read(name: string, ext: 'html' | 'ts'): string {
 }
 
 for (const name of panels) {
+  test(`${name}: hiding collapses the whole host, header included`, () => {
+    const ts = read(name, 'ts');
+    const css = read(name, 'css');
+    const rule = /:host\(\.collapsed\)\s*\{([^}]*)\}/.exec(css);
+
+    assert.match(ts, /host:\s*\{\s*'\[class\.collapsed\]':\s*'collapsed\(\)'\s*\}/);
+    assert.ok(rule, 'expected a :host(.collapsed) rule');
+    assert.match(rule![1], /display\s*:\s*none/);
+  });
+
   test(`${name}: pop-out button toggles floating like the header double-click`, () => {
     const html = read(name, 'html');
     const button = html

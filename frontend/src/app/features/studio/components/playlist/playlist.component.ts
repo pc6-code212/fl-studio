@@ -39,6 +39,7 @@ interface ClipNoteBlock {
   standalone: true,
   templateUrl: './playlist.component.html',
   styleUrl: './playlist.component.css',
+  host: { '[class.collapsed]': 'collapsed()' },
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PlaylistComponent {

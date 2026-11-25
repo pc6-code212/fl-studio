@@ -2,6 +2,10 @@
   display: contents;
 }
 
+:host(.collapsed) {
+  display: none;
+}
+
 .channel-rack {
   display: flex;
   flex-direction: column;

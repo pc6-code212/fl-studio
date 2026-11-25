@@ -2,6 +2,10 @@
   display: contents;
 }
 
+:host(.collapsed) {
+  display: none;
+}
+
 .mini-toolbar {
   flex: 0 0 auto;
   display: flex;

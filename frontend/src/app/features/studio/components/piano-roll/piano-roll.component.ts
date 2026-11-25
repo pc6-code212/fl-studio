@@ -54,6 +54,7 @@ export interface NoteMoveEvent {
   standalone: true,
   templateUrl: './piano-roll.component.html',
   styleUrl: './piano-roll.component.css',
+  host: { '[class.collapsed]': 'collapsed()' },
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PianoRollComponent implements AfterViewInit, OnDestroy {

@@ -2,6 +2,10 @@
   display: contents;
 }
 
+:host(.collapsed) {
+  display: none;
+}
+
 .mixer {
   display: flex;
   flex-direction: column;

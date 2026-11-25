@@ -13,6 +13,7 @@ export interface VolumeChangeEvent {
   imports: [FormsModule],
   templateUrl: './mixer-panel.component.html',
   styleUrl: './mixer-panel.component.css',
+  host: { '[class.collapsed]': 'collapsed()' },
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MixerPanelComponent {

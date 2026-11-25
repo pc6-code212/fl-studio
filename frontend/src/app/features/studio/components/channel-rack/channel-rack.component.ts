@@ -29,6 +29,7 @@ export interface ChannelMixerEvent {
   imports: [FormsModule],
   templateUrl: './channel-rack.component.html',
   styleUrl: './channel-rack.component.css',
+  host: { '[class.collapsed]': 'collapsed()' },
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ChannelRackComponent {
