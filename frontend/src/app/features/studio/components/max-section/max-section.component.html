@@ -69,4 +69,23 @@
       }
     </div>
   }
+
+  @if (maximizedPanel(); as maximized) {
+    <div class="maximized-layer">
+      @switch (maximized) {
+        @case ('channelRack') {
+          <ng-container [ngTemplateOutlet]="channelRackTemplate()"></ng-container>
+        }
+        @case ('pianoRoll') {
+          <ng-container [ngTemplateOutlet]="pianoRollTemplate()"></ng-container>
+        }
+        @case ('playlist') {
+          <ng-container [ngTemplateOutlet]="playlistTemplate()"></ng-container>
+        }
+        @case ('mixer') {
+          <ng-container [ngTemplateOutlet]="mixerTemplate()"></ng-container>
+        }
+      }
+    </div>
+  }
 </section>

@@ -144,7 +144,8 @@
     [playlistTemplate]="playlistPanel"
     (rackResizeStart)="onRackResizeStart($event)"
     (playlistResizeStart)="onPlaylistResizeStart($event)"
-    (panelResizeStart)="onPanelResizeStart($event.id, $event.event)" />
+    (panelResizeStart)="onPanelResizeStart($event.id, $event.event)"
+    [mixerTemplate]="mixerPanel" />
 
   @if (store.panels().mixer.open && !store.panels().mixer.maximized) {
     @if (!store.panels().mixer.floating) {
@@ -170,25 +171,6 @@
     </div>
   }
 </main>
-
-@if (maximizedPanel(); as maximized) {
-  <div class="maximized-layer">
-    @switch (maximized) {
-      @case ('channelRack') {
-        <ng-container [ngTemplateOutlet]="channelRackPanel"></ng-container>
-      }
-      @case ('pianoRoll') {
-        <ng-container [ngTemplateOutlet]="pianoRollPanel"></ng-container>
-      }
-      @case ('playlist') {
-        <ng-container [ngTemplateOutlet]="playlistPanel"></ng-container>
-      }
-      @case ('mixer') {
-        <ng-container [ngTemplateOutlet]="mixerPanel"></ng-container>
-      }
-    }
-  </div>
-}
 
 <app-status-bar
   [patternNumber]="store.patternNumber()"

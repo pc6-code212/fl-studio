@@ -129,9 +129,9 @@ input[type="range"]::-webkit-slider-thumb {
 }
 
 .panel.maximized {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: 9999;
+  z-index: 1;
   // Beat the per-panel component sizes (rack height, playlist height, ...)
   // that would otherwise keep the maximized panel from filling the screen.
   width: auto !important;

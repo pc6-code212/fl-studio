@@ -46,13 +46,6 @@ export class StudioPage implements OnInit {
       : '212px minmax(0, 1fr)';
   });
 
-  readonly maximizedPanel = computed<PanelId | null>(() => {
-    const panels = this.store.panels();
-    return (
-      (Object.keys(panels) as PanelId[]).find(id => panels[id].maximized) ?? null
-    );
-  });
-
   ngOnInit(): void {
     this.store.loadLibrary();
   }
