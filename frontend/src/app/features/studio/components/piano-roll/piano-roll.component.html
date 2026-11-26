@@ -6,7 +6,6 @@
       <div class="win-controls">
         <button class="win-btn" title="Hide" (click)="collapseToggle.emit()">–</button>
         <button class="win-btn" [title]="maximized() ? 'Pop out' : 'Maximize'" (click)="maximizeToggle.emit()">{{ maximized() ? '❐' : '⛶' }}</button>
-        <button class="win-btn" [title]="floating() ? 'Dock' : 'Pop out'" (click)="floatToggle.emit()">{{ floating() ? '❐' : '□' }}</button>
         <button class="win-btn close" title="Close" (click)="closePanel.emit()">✕</button>
       </div>
     </div>

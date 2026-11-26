@@ -19,6 +19,7 @@ import {
   PlaylistTrack
 } from '../models/studio.model';
 import {
+  PANEL_FLOATING_Z_BASE,
   PANEL_IDS,
   hasOtherMaximized,
   maximizedPanelStack,
@@ -566,6 +567,10 @@ export class StudioStore implements OnDestroy {
 
   panelZIndex(id: PanelId): number {
     return panelLayerZIndex(this.panelOrder(), id);
+  }
+
+  floatingPanelZIndex(id: PanelId): number {
+    return panelLayerZIndex(this.panelOrder(), id, PANEL_FLOATING_Z_BASE);
   }
 
   setPanelPosition(id: PanelId, x: number, y: number): void {

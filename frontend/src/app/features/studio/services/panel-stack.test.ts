@@ -2,7 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { PanelId, PanelStates } from '../models/studio.model.ts';
 import {
+  PANEL_FLOATING_Z_BASE,
   PANEL_IDS,
+  PANEL_Z_BASE,
   hasOtherMaximized,
   maximizedPanelStack,
   movePanelToBack,
@@ -133,6 +135,11 @@ test('the last focused maximized panel receives the highest z-index', () => {
   const top = panelLayerZIndex(order, 'pianoRoll');
   assert.equal(Math.max(...z), top);
   assert.ok(top > panelLayerZIndex(order, 'channelRack'));
+});
+
+test('popped-out panes always sit above the maximized layers', () => {
+  const maxTop = PANEL_Z_BASE + PANEL_IDS.length - 1;
+  assert.ok(PANEL_FLOATING_Z_BASE > maxTop);
 });
 
 test('panelLayerZIndex falls back to the base for unknown ids', () => {

@@ -155,7 +155,7 @@
       class="panel-slot"
       [class.floating]="store.panels().mixer.floating"
       [class.collapsed]="store.panels().mixer.collapsed"
-      [style.z-index]="store.frontPanel() === 'mixer' ? 140 : 130"
+      [style.z-index]="store.floatingPanelZIndex('mixer')"
       (pointerdown)="store.bringPanelToFront('mixer')"
       [style.left.px]="store.panels().mixer.floating ? store.panels().mixer.x : null"
       [style.top.px]="store.panels().mixer.floating ? store.panels().mixer.y : null"

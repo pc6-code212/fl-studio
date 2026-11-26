@@ -22,19 +22,16 @@ for (const name of panels) {
     assert.match(rule![1], /display\s*:\s*none/);
   });
 
-  test(`${name}: pop-out button toggles floating like the header double-click`, () => {
+  test(`${name}: header has no separate dock/pop-out button`, () => {
     const html = read(name, 'html');
     const button = html
       .split('\n')
       .find(line => line.includes('class="win-btn"') && line.includes('floatToggle.emit()'));
 
-    assert.ok(button, 'expected a win-btn wired to floatToggle.emit()');
-    assert.match(button!, /\[title\]="floating\(\) \? 'Dock' : 'Pop out'"/);
-    assert.match(button!, /floating\(\) \? '❐' : '□'/);
-    assert.doesNotMatch(button!, /maximizeToggle\.emit\(\)/);
+    assert.equal(button, undefined, 'pop-out is handled by the maximize button');
   });
 
-  test(`${name}: component exposes the floating state used by the button`, () => {
+  test(`${name}: component exposes the floating state for popped-out panes`, () => {
     const ts = read(name, 'ts');
     assert.match(ts, /readonly floating = input<boolean>\(false\);/);
   });
