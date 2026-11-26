@@ -28,6 +28,6 @@ test('store exposes the ordered list of maximized panels', () => {
 });
 
 test('toggling one panel no longer clears every other maximized panel', () => {
-  assert.match(store, /setPanelMaximized\(states, id, maximized\)/);
+  assert.match(store, /togglePanelMaximizedState\(states, id\)/);
   assert.doesNotMatch(store, /maximized: key === id \? maximized : false/);
 });

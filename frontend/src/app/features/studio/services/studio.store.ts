@@ -25,7 +25,7 @@ import {
   movePanelToBack,
   movePanelToFront,
   panelLayerZIndex,
-  setPanelMaximized
+  togglePanelMaximizedState
 } from './panel-stack';
 
 const PANEL_MIN_SIZE: Record<PanelId, { width: number; height: number }> = {
@@ -526,16 +526,11 @@ export class StudioStore implements OnDestroy {
   }
 
   togglePanelMaximized(id: PanelId): void {
-    const maximized = !this.panels()[id].maximized;
-    if (maximized) {
+    if (!this.panels()[id].maximized) {
       this.centerPanel.set(id);
     }
-    this.panels.update(states => setPanelMaximized(states, id, maximized));
-    if (maximized) {
-      this.bringPanelToFront(id);
-    } else if (this.frontPanel() === id) {
-      this.panelOrder.update(order => movePanelToBack(order, id));
-    }
+    this.panels.update(states => togglePanelMaximizedState(states, id));
+    this.bringPanelToFront(id);
   }
 
   togglePanelFloating(id: PanelId): void {

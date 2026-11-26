@@ -8,7 +8,8 @@ import {
   movePanelToBack,
   movePanelToFront,
   panelLayerZIndex,
-  setPanelMaximized
+  setPanelMaximized,
+  togglePanelMaximizedState
 } from './panel-stack.ts';
 
 function state(overrides: Partial<PanelStates[PanelId]> = {}) {
@@ -71,6 +72,39 @@ test('restoring one panel leaves the other maximized panels alone', () => {
 
   assert.equal(panels.channelRack.maximized, true);
   assert.equal(panels.playlist.maximized, false);
+});
+
+test('pressing maximize on an already maximized panel pops it out', () => {
+  let panels = states();
+  panels.channelRack.open = true;
+  panels = togglePanelMaximizedState(panels, 'channelRack');
+  assert.equal(panels.channelRack.maximized, true);
+
+  panels = togglePanelMaximizedState(panels, 'channelRack');
+  assert.equal(panels.channelRack.maximized, false);
+  assert.equal(panels.channelRack.floating, true);
+  assert.equal(panels.channelRack.open, true);
+});
+
+test('pressing maximize on a popped-out panel maximizes it again', () => {
+  let panels = states();
+  panels.channelRack.open = true;
+  panels.channelRack.floating = true;
+  panels = togglePanelMaximizedState(panels, 'channelRack');
+
+  assert.equal(panels.channelRack.maximized, true);
+  assert.equal(panels.channelRack.floating, false);
+});
+
+test('popping one panel out does not disturb another maximized panel', () => {
+  let panels = states();
+  panels = togglePanelMaximizedState(panels, 'channelRack');
+  panels = togglePanelMaximizedState(panels, 'pianoRoll');
+  panels = togglePanelMaximizedState(panels, 'pianoRoll');
+
+  assert.equal(panels.channelRack.maximized, true);
+  assert.equal(panels.pianoRoll.maximized, false);
+  assert.equal(panels.pianoRoll.floating, true);
 });
 
 test('maximizedPanelStack follows the stacking order and skips hidden panels', () => {

@@ -46,7 +46,7 @@ for (const name of panels) {
       .find(line => line.includes('maximizeToggle.emit()'));
 
     assert.ok(button, 'expected a win-btn wired to maximizeToggle.emit()');
-    assert.match(button!, /\[title\]="maximized\(\) \? 'Restore' : 'Maximize'"/);
+    assert.match(button!, /\[title\]="maximized\(\) \? 'Pop out' : 'Maximize'"/);
     assert.doesNotMatch(button!, /floatToggle\.emit\(\)/);
   });
 

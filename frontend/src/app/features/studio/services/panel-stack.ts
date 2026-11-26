@@ -66,6 +66,29 @@ export function setPanelMaximized(
   };
 }
 
+/**
+ * Maximize a panel, or pop it out into a floating window when it is already
+ * maximized.
+ */
+export function togglePanelMaximizedState(
+  panels: PanelStates,
+  id: PanelId
+): PanelStates {
+  if (panels[id].maximized) {
+    return {
+      ...panels,
+      [id]: {
+        ...panels[id],
+        open: true,
+        collapsed: false,
+        maximized: false,
+        floating: true
+      }
+    };
+  }
+  return setPanelMaximized(panels, id, true);
+}
+
 /** True when any other visible panel is currently maximized. */
 export function hasOtherMaximized(
   panels: PanelStates,
