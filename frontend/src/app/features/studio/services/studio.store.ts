@@ -28,6 +28,7 @@ import {
   popPanelOut,
   togglePanelMaximizedState
 } from './panel-stack';
+import { PanelRect, ResizeEdge, resizePanelRect } from './panel-resize';
 
 const PANEL_MIN_SIZE: Record<PanelId, { width: number; height: number }> = {
   channelRack: { width: 460, height: 150 },
@@ -600,16 +601,28 @@ export class StudioStore implements OnDestroy {
     });
   }
 
-  setPanelSize(id: PanelId, width: number, height: number): void {
+  setPanelRect(id: PanelId, rect: PanelRect): void {
     const min = PANEL_MIN_SIZE[id];
     this.panels.update(states => ({
       ...states,
       [id]: {
         ...states[id],
-        width: clamp(Math.round(width), min.width, window.innerWidth),
-        height: clamp(Math.round(height), min.height, window.innerHeight)
+        x: clamp(Math.round(rect.x), 0, Math.max(0, window.innerWidth - 120)),
+        y: clamp(Math.round(rect.y), 30, Math.max(30, window.innerHeight - 60)),
+        width: clamp(Math.round(rect.width), min.width, window.innerWidth),
+        height: clamp(Math.round(rect.height), min.height, window.innerHeight)
       }
     }));
+  }
+
+  resizePanelFrom(
+    id: PanelId,
+    start: PanelRect,
+    edge: ResizeEdge,
+    dx: number,
+    dy: number
+  ): void {
+    this.setPanelRect(id, resizePanelRect(start, edge, dx, dy, PANEL_MIN_SIZE[id]));
   }
 
   setRackHeight(height: number): void {

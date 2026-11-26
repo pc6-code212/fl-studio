@@ -14,6 +14,10 @@ const page = readFileSync(
   new URL('../../pages/studio.page.html', import.meta.url),
   'utf8'
 );
+const pageTs = readFileSync(
+  new URL('../../pages/studio.page.ts', import.meta.url),
+  'utf8'
+);
 
 test('max section renders every maximized panel, not just the first', () => {
   assert.match(html, /@for \(id of store\.maximizedPanels\(\); track id\)/);
@@ -36,6 +40,36 @@ test('popped-out panes use the always-on-top z-index', () => {
     assert.match(html, new RegExp(`store\\.floatingPanelZIndex\\('${id}'\\)`));
   }
   assert.match(page, /store\.floatingPanelZIndex\('mixer'\)/);
+});
+
+test('floating panes expose top, right, bottom and left resize handles', () => {
+  const edges: [string, string][] = [
+    ['n', 'top'],
+    ['e', 'right'],
+    ['s', 'bottom'],
+    ['w', 'left']
+  ];
+  for (const id of ['channelRack', 'pianoRoll', 'playlist']) {
+    for (const [edge, side] of edges) {
+      assert.match(
+        html,
+        new RegExp(`class="resize-edge ${side}"[^>]*edge: '${edge}'`)
+      );
+    }
+  }
+  for (const [edge] of edges) {
+    assert.match(
+      page,
+      new RegExp(`onPanelResizeStart\\('mixer', \\$event, '${edge}'\\)`)
+    );
+  }
+});
+
+test('resizing is edge aware from the page down to the store', () => {
+  assert.match(store, /resizePanelFrom\(/);
+  assert.match(store, /resizePanelRect\(start, edge, dx, dy/);
+  assert.match(pageTs, /store\.resizePanelFrom\(/);
+  assert.doesNotMatch(pageTs, /setPanelSize\(/);
 });
 
 test('toggling one panel no longer clears every other maximized panel', () => {

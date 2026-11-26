@@ -144,7 +144,7 @@
     [playlistTemplate]="playlistPanel"
     (rackResizeStart)="onRackResizeStart($event)"
     (playlistResizeStart)="onPlaylistResizeStart($event)"
-    (panelResizeStart)="onPanelResizeStart($event.id, $event.event)"
+    (panelResizeStart)="onPanelResizeStart($event.id, $event.event, $event.edge)"
     [mixerTemplate]="mixerPanel" />
 
   @if (store.panels().mixer.open && !store.panels().mixer.maximized) {
@@ -163,10 +163,11 @@
       [style.height.px]="store.panels().mixer.floating ? store.panels().mixer.height : null">
       <ng-container [ngTemplateOutlet]="mixerPanel"></ng-container>
       @if (store.panels().mixer.floating) {
-        <div
-          class="resize-grip"
-          title="Drag to resize"
-          (pointerdown)="onPanelResizeStart('mixer', $event)"></div>
+        <div class="resize-edge top" title="Resize" (pointerdown)="onPanelResizeStart('mixer', $event, 'n')"></div>
+        <div class="resize-edge right" title="Resize" (pointerdown)="onPanelResizeStart('mixer', $event, 'e')"></div>
+        <div class="resize-edge bottom" title="Resize" (pointerdown)="onPanelResizeStart('mixer', $event, 's')"></div>
+        <div class="resize-edge left" title="Resize" (pointerdown)="onPanelResizeStart('mixer', $event, 'w')"></div>
+        <div class="resize-grip" title="Drag corner to resize" (pointerdown)="onPanelResizeStart('mixer', $event, 'se')"></div>
       }
     </div>
   }

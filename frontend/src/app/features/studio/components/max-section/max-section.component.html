@@ -12,10 +12,11 @@
       [style.height.px]="store.panels().channelRack.floating ? store.panels().channelRack.height : null">
       <ng-container [ngTemplateOutlet]="channelRackTemplate()"></ng-container>
       @if (store.panels().channelRack.floating) {
-        <div
-          class="resize-grip"
-          title="Drag to resize"
-          (pointerdown)="panelResizeStart.emit({ id: 'channelRack', event: $event })"></div>
+        <div class="resize-edge top" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'channelRack', event: $event, edge: 'n' })"></div>
+        <div class="resize-edge right" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'channelRack', event: $event, edge: 'e' })"></div>
+        <div class="resize-edge bottom" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'channelRack', event: $event, edge: 's' })"></div>
+        <div class="resize-edge left" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'channelRack', event: $event, edge: 'w' })"></div>
+        <div class="resize-grip" title="Drag corner to resize" (pointerdown)="panelResizeStart.emit({ id: 'channelRack', event: $event, edge: 'se' })"></div>
       }
     </div>
 
@@ -37,10 +38,11 @@
       [style.height.px]="store.panels().pianoRoll.floating ? store.panels().pianoRoll.height : null">
       <ng-container [ngTemplateOutlet]="pianoRollTemplate()"></ng-container>
       @if (store.panels().pianoRoll.floating) {
-        <div
-          class="resize-grip"
-          title="Drag to resize"
-          (pointerdown)="panelResizeStart.emit({ id: 'pianoRoll', event: $event })"></div>
+        <div class="resize-edge top" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'pianoRoll', event: $event, edge: 'n' })"></div>
+        <div class="resize-edge right" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'pianoRoll', event: $event, edge: 'e' })"></div>
+        <div class="resize-edge bottom" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'pianoRoll', event: $event, edge: 's' })"></div>
+        <div class="resize-edge left" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'pianoRoll', event: $event, edge: 'w' })"></div>
+        <div class="resize-grip" title="Drag corner to resize" (pointerdown)="panelResizeStart.emit({ id: 'pianoRoll', event: $event, edge: 'se' })"></div>
       }
     </div>
   }
@@ -62,10 +64,11 @@
       [style.height.px]="store.panels().playlist.floating ? store.panels().playlist.height : null">
       <ng-container [ngTemplateOutlet]="playlistTemplate()"></ng-container>
       @if (store.panels().playlist.floating) {
-        <div
-          class="resize-grip"
-          title="Drag to resize"
-          (pointerdown)="panelResizeStart.emit({ id: 'playlist', event: $event })"></div>
+        <div class="resize-edge top" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'playlist', event: $event, edge: 'n' })"></div>
+        <div class="resize-edge right" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'playlist', event: $event, edge: 'e' })"></div>
+        <div class="resize-edge bottom" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'playlist', event: $event, edge: 's' })"></div>
+        <div class="resize-edge left" title="Resize" (pointerdown)="panelResizeStart.emit({ id: 'playlist', event: $event, edge: 'w' })"></div>
+        <div class="resize-grip" title="Drag corner to resize" (pointerdown)="panelResizeStart.emit({ id: 'playlist', event: $event, edge: 'se' })"></div>
       }
     </div>
   }

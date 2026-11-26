@@ -188,3 +188,41 @@ input[type="range"]::-webkit-slider-thumb {
     linear-gradient(135deg, transparent 66%, rgba(255, 255, 255, 0.35) 67%, transparent 69%);
   border-bottom-right-radius: 6px;
 }
+
+/* Invisible grab strips so floating panes can be resized from any edge. */
+.resize-edge {
+  position: absolute;
+  z-index: 7;
+}
+
+.resize-edge.top,
+.resize-edge.bottom {
+  left: 8px;
+  right: 8px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.resize-edge.top {
+  top: 0;
+}
+
+.resize-edge.bottom {
+  bottom: 0;
+}
+
+.resize-edge.left,
+.resize-edge.right {
+  top: 8px;
+  bottom: 8px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.resize-edge.left {
+  left: 0;
+}
+
+.resize-edge.right {
+  right: 0;
+}

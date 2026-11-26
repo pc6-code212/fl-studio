@@ -16,6 +16,7 @@ import { PlaylistComponent } from '@features/studio/components/playlist/playlist
 import { StatusBarComponent } from '@features/studio/components/status-bar/status-bar.component';
 import { ToolbarComponent } from '@features/studio/components/toolbar/toolbar.component';
 import { PanelId } from '@features/studio/models/studio.model';
+import { ResizeEdge } from '@features/studio/services/panel-resize';
 import { StudioStore } from '@features/studio/services/studio.store';
 
 @Component({
@@ -117,19 +118,29 @@ export class StudioPage implements OnInit {
     window.addEventListener('pointerup', stop);
   }
 
-  onPanelResizeStart(id: PanelId, event: Event): void {
+  onPanelResizeStart(
+    id: PanelId,
+    event: Event,
+    edge: ResizeEdge = 'se'
+  ): void {
     const pointer = event as PointerEvent;
     const panel = this.store.panels()[id];
     event.preventDefault();
     const startX = pointer.clientX;
     const startY = pointer.clientY;
-    const startWidth = panel.width;
-    const startHeight = panel.height;
+    const start = {
+      x: panel.x,
+      y: panel.y,
+      width: panel.width,
+      height: panel.height
+    };
     const move = (moveEvent: PointerEvent) =>
-      this.store.setPanelSize(
+      this.store.resizePanelFrom(
         id,
-        startWidth + moveEvent.clientX - startX,
-        startHeight + moveEvent.clientY - startY
+        start,
+        edge,
+        moveEvent.clientX - startX,
+        moveEvent.clientY - startY
       );
     const stop = () => {
       window.removeEventListener('pointermove', move);

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { PanelId } from '@features/studio/models/studio.model';
+import { ResizeEdge } from '@features/studio/services/panel-resize';
 import { StudioStore } from '@features/studio/services/studio.store';
 
 @Component({
@@ -27,7 +28,11 @@ export class MaxSectionComponent {
 
   readonly rackResizeStart = output<PointerEvent>();
   readonly playlistResizeStart = output<PointerEvent>();
-  readonly panelResizeStart = output<{ id: PanelId; event: PointerEvent }>();
+  readonly panelResizeStart = output<{
+    id: PanelId;
+    event: PointerEvent;
+    edge: ResizeEdge;
+  }>();
 
   readonly store = inject(StudioStore);
 
