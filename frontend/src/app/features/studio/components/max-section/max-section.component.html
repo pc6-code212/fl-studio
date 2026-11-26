@@ -70,9 +70,12 @@
     </div>
   }
 
-  @if (maximizedPanel(); as maximized) {
-    <div class="maximized-layer">
-      @switch (maximized) {
+  @for (id of store.maximizedPanels(); track id) {
+    <div
+      class="maximized-layer"
+      [style.z-index]="store.panelZIndex(id)"
+      (pointerdown)="store.bringPanelToFront(id)">
+      @switch (id) {
         @case ('channelRack') {
           <ng-container [ngTemplateOutlet]="channelRackTemplate()"></ng-container>
         }

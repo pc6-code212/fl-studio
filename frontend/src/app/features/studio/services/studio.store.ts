@@ -18,6 +18,15 @@ import {
   PlaylistClipNote,
   PlaylistTrack
 } from '../models/studio.model';
+import {
+  PANEL_IDS,
+  hasOtherMaximized,
+  maximizedPanelStack,
+  movePanelToBack,
+  movePanelToFront,
+  panelLayerZIndex,
+  setPanelMaximized
+} from './panel-stack';
 
 const PANEL_MIN_SIZE: Record<PanelId, { width: number; height: number }> = {
   channelRack: { width: 460, height: 150 },
@@ -172,7 +181,13 @@ export class StudioStore implements OnDestroy {
       height: 520
     }
   });
-  readonly frontPanel = signal<PanelId>('mixer');
+  readonly panelOrder = signal<PanelId[]>([...PANEL_IDS]);
+  readonly frontPanel = computed<PanelId>(
+    () => this.panelOrder()[this.panelOrder().length - 1]
+  );
+  readonly maximizedPanels = computed(() =>
+    maximizedPanelStack(this.panels(), this.panelOrder())
+  );
   readonly centerPanel = signal<PanelId>('playlist');
   readonly rackHeight = signal(320);
   readonly playlistHeight = signal(240);
@@ -443,42 +458,50 @@ export class StudioStore implements OnDestroy {
   togglePanel(id: PanelId): void {
     const current = this.panels()[id];
     const visible = current.open && !current.collapsed;
-    if (visible) {
-      this.closePanel(id);
+    if (!visible) {
+      this.openPanel(id);
       return;
     }
-    this.openPanel(id);
-    this.frontPanel.set(id);
+    if (this.frontPanel() !== id) {
+      this.focusPanel(id);
+      return;
+    }
+    this.closePanel(id);
+  }
+
+  private focusPanel(id: PanelId): void {
+    this.bringPanelToFront(id);
+    const panels = this.panels();
+    if (!panels[id].maximized && hasOtherMaximized(panels, id)) {
+      // A maximized layer would hide a docked panel, so join the maximized
+      // stack instead of leaving the focused panel invisible underneath it.
+      this.togglePanelMaximized(id);
+    }
   }
 
   private openPanel(id: PanelId): void {
-    const center = this.panels()[this.centerPanel()];
+    const panels = this.panels();
+    const current = panels[id];
+    const wasVisible = current.open && !current.collapsed;
+    const center = panels[this.centerPanel()];
     const centerVisible = center.open && !center.collapsed;
-    const floating = this.centerPanel() !== id && centerVisible;
+    const maximized = wasVisible ? current.maximized : hasOtherMaximized(panels, id);
+    const floating =
+      !maximized && !wasVisible && this.centerPanel() !== id && centerVisible;
     if (!floating) {
       this.centerPanel.set(id);
     }
-    this.panels.update(states => {
-      const next = {} as PanelStates;
-      (Object.keys(states) as PanelId[]).forEach(key => {
-        const state = { ...states[key] };
-        // Opening a panel must not leave another panel's maximized overlay on
-        // top of it, but the maximized panel keeps its open state.
-        if (key !== id && state.maximized) {
-          state.maximized = false;
-        }
-        next[key] = state;
-      });
-      next[id] = {
-        ...next[id],
+    this.panels.update(states => ({
+      ...states,
+      [id]: {
+        ...states[id],
         open: true,
         collapsed: false,
-        maximized: false,
-        floating
-      };
-      return next;
-    });
-    this.frontPanel.set(id);
+        maximized,
+        floating: maximized ? false : wasVisible ? states[id].floating : floating
+      }
+    }));
+    this.bringPanelToFront(id);
   }
 
   closePanel(id: PanelId): void {
@@ -486,6 +509,9 @@ export class StudioStore implements OnDestroy {
       ...states,
       [id]: { ...states[id], open: false, maximized: false }
     }));
+    if (this.frontPanel() === id) {
+      this.panelOrder.update(order => movePanelToBack(order, id));
+    }
   }
 
   togglePanelCollapsed(id: PanelId): void {
@@ -504,24 +530,11 @@ export class StudioStore implements OnDestroy {
     if (maximized) {
       this.centerPanel.set(id);
     }
-    this.panels.update(states => {
-      const next = {} as PanelStates;
-      (Object.keys(states) as PanelId[]).forEach(key => {
-        const state = { ...states[key], maximized: key === id ? maximized : false };
-        // Other panels stay exactly as they were (open, docked or floating);
-        // the maximized panel simply covers them.
-        next[key] = state;
-      });
-      next[id] = {
-        ...next[id],
-        open: true,
-        collapsed: false,
-        floating: maximized ? false : next[id].floating
-      };
-      return next;
-    });
+    this.panels.update(states => setPanelMaximized(states, id, maximized));
     if (maximized) {
-      this.frontPanel.set(id);
+      this.bringPanelToFront(id);
+    } else if (this.frontPanel() === id) {
+      this.panelOrder.update(order => movePanelToBack(order, id));
     }
   }
 
@@ -546,13 +559,18 @@ export class StudioStore implements OnDestroy {
       });
       return next;
     });
-    this.frontPanel.set(id);
+    this.bringPanelToFront(id);
   }
 
   bringPanelToFront(id: PanelId): void {
-    if (this.frontPanel() !== id) {
-      this.frontPanel.set(id);
+    if (this.frontPanel() === id) {
+      return;
     }
+    this.panelOrder.update(order => movePanelToFront(order, id));
+  }
+
+  panelZIndex(id: PanelId): number {
+    return panelLayerZIndex(this.panelOrder(), id);
   }
 
   setPanelPosition(id: PanelId, x: number, y: number): void {

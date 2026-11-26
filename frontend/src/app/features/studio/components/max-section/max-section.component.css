@@ -11,12 +11,11 @@
   overflow: hidden;
 }
 
-/* Maximized panels cover the workspace center only and always sit above the
-   docked and floating panels, whatever their z-index. */
+/* Maximized panels cover the workspace center. Several can be stacked at once;
+   their z-index comes from the panel order so the last one focused is on top. */
 .maximized-layer {
   position: absolute;
   inset: 0;
-  z-index: 1000;
   display: flex;
   flex-direction: column;
   background: var(--bg);

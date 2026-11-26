@@ -31,13 +31,6 @@ export class MaxSectionComponent {
 
   readonly store = inject(StudioStore);
 
-  readonly maximizedPanel = computed<PanelId | null>(() => {
-    const panels = this.store.panels();
-    return (
-      (Object.keys(panels) as PanelId[]).find(id => panels[id].maximized) ?? null
-    );
-  });
-
   readonly showRackSplitter = computed(() => {
     const panels = this.store.panels();
     return (

@@ -39,6 +39,17 @@ for (const name of panels) {
     assert.match(ts, /readonly floating = input<boolean>\(false\);/);
   });
 
+  test(`${name}: header exposes a maximize button wired to maximizeToggle`, () => {
+    const html = read(name, 'html');
+    const button = html
+      .split('\n')
+      .find(line => line.includes('maximizeToggle.emit()'));
+
+    assert.ok(button, 'expected a win-btn wired to maximizeToggle.emit()');
+    assert.match(button!, /\[title\]="maximized\(\) \? 'Restore' : 'Maximize'"/);
+    assert.doesNotMatch(button!, /floatToggle\.emit\(\)/);
+  });
+
   test(`${name}: header double-click still pops out and docks`, () => {
     const html = read(name, 'html');
     const ts = read(name, 'ts');
