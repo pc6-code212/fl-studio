@@ -70,6 +70,23 @@ export function setPanelMaximized(
   };
 }
 
+/** Turn a panel into a small floating pane. */
+export function popPanelOut(
+  panels: PanelStates,
+  id: PanelId
+): PanelStates {
+  return {
+    ...panels,
+    [id]: {
+      ...panels[id],
+      open: true,
+      collapsed: false,
+      maximized: false,
+      floating: true
+    }
+  };
+}
+
 /**
  * Maximize a panel, or pop it out into a floating window when it is already
  * maximized.
@@ -79,16 +96,7 @@ export function togglePanelMaximizedState(
   id: PanelId
 ): PanelStates {
   if (panels[id].maximized) {
-    return {
-      ...panels,
-      [id]: {
-        ...panels[id],
-        open: true,
-        collapsed: false,
-        maximized: false,
-        floating: true
-      }
-    };
+    return popPanelOut(panels, id);
   }
   return setPanelMaximized(panels, id, true);
 }

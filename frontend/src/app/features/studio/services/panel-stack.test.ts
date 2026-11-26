@@ -10,6 +10,7 @@ import {
   movePanelToBack,
   movePanelToFront,
   panelLayerZIndex,
+  popPanelOut,
   setPanelMaximized,
   togglePanelMaximizedState
 } from './panel-stack.ts';
@@ -74,6 +75,16 @@ test('restoring one panel leaves the other maximized panels alone', () => {
 
   assert.equal(panels.channelRack.maximized, true);
   assert.equal(panels.playlist.maximized, false);
+});
+
+test('popPanelOut turns a panel into a small floating pane', () => {
+  let panels = states();
+  panels.channelRack.open = true;
+  panels = popPanelOut(panels, 'channelRack');
+
+  assert.equal(panels.channelRack.open, true);
+  assert.equal(panels.channelRack.floating, true);
+  assert.equal(panels.channelRack.maximized, false);
 });
 
 test('pressing maximize on an already maximized panel pops it out', () => {

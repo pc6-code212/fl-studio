@@ -20,12 +20,12 @@ import {
 } from '../models/studio.model';
 import {
   PANEL_FLOATING_Z_BASE,
-  PANEL_IDS,
   hasOtherMaximized,
   maximizedPanelStack,
   movePanelToBack,
   movePanelToFront,
   panelLayerZIndex,
+  popPanelOut,
   togglePanelMaximizedState
 } from './panel-stack';
 
@@ -164,7 +164,7 @@ export class StudioStore implements OnDestroy {
     playlist: {
       open: true,
       collapsed: false,
-      maximized: false,
+      maximized: true,
       floating: false,
       x: 320,
       y: 280,
@@ -182,7 +182,12 @@ export class StudioStore implements OnDestroy {
       height: 520
     }
   });
-  readonly panelOrder = signal<PanelId[]>([...PANEL_IDS]);
+  readonly panelOrder = signal<PanelId[]>([
+    'channelRack',
+    'pianoRoll',
+    'mixer',
+    'playlist'
+  ]);
   readonly frontPanel = computed<PanelId>(
     () => this.panelOrder()[this.panelOrder().length - 1]
   );
@@ -473,22 +478,30 @@ export class StudioStore implements OnDestroy {
   private focusPanel(id: PanelId): void {
     this.bringPanelToFront(id);
     const panels = this.panels();
-    if (!panels[id].maximized && hasOtherMaximized(panels, id)) {
-      // A maximized layer would hide a docked panel, so join the maximized
-      // stack instead of leaving the focused panel invisible underneath it.
-      this.togglePanelMaximized(id);
+    if (
+      !panels[id].maximized &&
+      !panels[id].floating &&
+      hasOtherMaximized(panels, id)
+    ) {
+      // A maximized layer would hide a docked panel, so pop it out as a small
+      // pane that always stays on top instead of filling the workspace.
+      this.panels.update(states => popPanelOut(states, id));
     }
   }
 
   private openPanel(id: PanelId): void {
     const panels = this.panels();
     const current = panels[id];
-    const wasVisible = current.open && !current.collapsed;
+    if (current.open && !current.collapsed) {
+      this.focusPanel(id);
+      return;
+    }
     const center = panels[this.centerPanel()];
     const centerVisible = center.open && !center.collapsed;
-    const maximized = wasVisible ? current.maximized : hasOtherMaximized(panels, id);
     const floating =
-      !maximized && !wasVisible && this.centerPanel() !== id && centerVisible;
+      current.floating ||
+      hasOtherMaximized(panels, id) ||
+      (this.centerPanel() !== id && centerVisible);
     if (!floating) {
       this.centerPanel.set(id);
     }
@@ -498,8 +511,8 @@ export class StudioStore implements OnDestroy {
         ...states[id],
         open: true,
         collapsed: false,
-        maximized,
-        floating: maximized ? false : wasVisible ? states[id].floating : floating
+        maximized: false,
+        floating
       }
     }));
     this.bringPanelToFront(id);
